@@ -1,0 +1,15 @@
+<html>
+<body>
+
+{% for lang in LANGUAGES %}
+<a href="{% url setlang %}?language={{ lang.0 }}">{{ lang.1 }}</a>
+{% endfor %}
+<br>
+{{ LANGUAGE_CODE }}
+<ul>
+{% for item in item_list %}
+<li>{{ item.title }} - {{ item.slug }}</li>
+{% endfor %}
+<ul>
+</body>
+</html>

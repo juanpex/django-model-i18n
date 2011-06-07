@@ -116,6 +116,7 @@ class Translator(object):
         # setup i18n languages on master model for easier access
         master_model.i18n_languages = settings.LANGUAGES
         master_model.i18n_default_language = opts.master_language
+        master_model.i18n_instance_language = opts.master_language
         return type(model_name, (models.Model,), attrs)
 
     def setup_master_model(self, master_model, translation_model):
@@ -132,6 +133,8 @@ class Translator(object):
         # Master model
         master_model._translation_model = translation_model
         master_model.switch_language = switch_language
+        master_model.save = trans_save(master_model.save)
+        master_model.lang = lang
         # Managers
         # FIXME: We probably should we add a translation option to ignore some
         # manager (so users can create non multilingual managers)
@@ -152,6 +155,59 @@ class Translator(object):
             setattr(manager, method_name,
                 new.instancemethod(getattr(managers, method_name), manager, manager.__class__))
 
+from django.db import transaction
+@transaction.commit_on_success
+def i18n_save(instance, language, values={}):
+    from model_i18n.utils import get_translation_opt
+    from django.forms.models import modelform_factory
+    """Change view for i18n values for current instance. This is a
+    simplified django-admin change view which displays i18n fields
+    for current model/id."""
+    obj = instance
+    if language not in dict(settings.LANGUAGES):
+        raise ValueError(_('Incorrect language %(lang)s') % {'lang': language})
+
+    master_language = get_translation_opt(obj, 'master_language')
+    if language == master_language:
+        return instance.save()
+
+    fields = get_translation_opt(obj, 'translatable_fields')
+    lang_field = get_translation_opt(obj, 'language_field_name')
+    master_field = get_translation_opt(obj, 'master_field_name')
+
+    try:
+        trans = obj.translations.get(**{lang_field: language})
+    except obj._translation_model.DoesNotExist: # new translation
+        trans = obj._translation_model(**{lang_field: language,
+                                          master_field: obj})
+
+    ModelForm = modelform_factory(obj._translation_model, fields=fields)
+    initial = dict([(n,getattr(obj, n)) for n in fields])
+    values.update(initial)
+    form = ModelForm(instance=trans, data=values)
+    if form.is_valid():
+        return form.save()
+    return obj
+
+def trans_save(method):
+    def wrapper(self,*args,**kwargs):
+        obj = self
+        if hasattr(self, 'current_language'):
+            if self.current_language and self.current_language!=self.i18n_default_language:
+                obj = i18n_save(obj, self.current_language)
+        else:
+            obj = method(self,*args,**kwargs)
+        return obj
+    return wrapper
+
+def lang(instance, lang=None):
+    if not instance:
+        return instance
+    if not lang:
+        return instance
+    setattr(instance, CURRENT_LANGUAGE, lang)
+    return instance
+    
 
 def switch_language(instance, lang=None):
     """Here we overrides the default fields with their translated

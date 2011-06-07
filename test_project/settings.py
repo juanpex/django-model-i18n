@@ -9,13 +9,20 @@ LANGUAGES = (
 )
 LANGUAGE_CODE = 'en'
 
-### model_i18n settings ###
-MODEL_I18N_CONF = 'i18n_conf'
+# translations settings
+
+MODEL_I18N_CONF = 'test_project.i18n_conf'
 MODEL_I18N_MASTER_LANGUAGE = LANGUAGE_CODE
+
+#-
 
 PROJECT_DIR = dirname(abspath(__file__))
 sys.path.append(join(PROJECT_DIR, 'apps'))
 sys.path.append(join(PROJECT_DIR, '..'))
+
+TEMPLATE_DIRS = (
+    join(PROJECT_DIR, "templates"), 
+)
 
 INSTALLED_APPS = (
     'django.contrib.auth',

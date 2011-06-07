@@ -185,9 +185,21 @@ class TransQuerySet(QuerySet):
         languages = filter(None, getattr(instance,
                                          CURRENT_LANGUAGES, '').split('_'))
         implicit = self.lang
+        from django.utils import translation
+        lang = translation.get_language()
         if implicit and implicit in languages:
             instance.switch_language(implicit) # switch to implicit language
         setattr(instance, CURRENT_LANGUAGES, languages)
+        from model_i18n.utils import get_translation_opt
+        lang_field = get_translation_opt(instance, 'language_field_name')
+        master_lang = get_master_language(self.model)
+        if lang != master_lang: 
+            try:
+                trans = instance.translations.get(**{lang_field: lang})
+                for field in instance._translation_model._transmeta.translatable_fields:
+                    setattr(instance, field, getattr(trans, field)) 
+            except:
+                pass
         return instance
 
     def _clone(self, *args, **kwargs):
