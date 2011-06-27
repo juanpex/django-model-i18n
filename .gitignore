@@ -16,7 +16,7 @@ dist
 .mr.developer.cfg
 .hg
 .bzr
-.svn
+.svn*
 *.pyc
 *.pyo
 *.tmp*

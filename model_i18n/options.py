@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.conf import settings
 
 from model_i18n.conf import DEFAULT_LANGUAGE_FIELD_NAME, RELATED_NAME, \

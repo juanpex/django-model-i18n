@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from os.path import dirname
 
 from model_i18n.utils import import_module
@@ -42,3 +43,29 @@ def autodiscover(module_name='translations'):
         # Step 3: import the app's translation file. If this has errors we want them
         # to bubble up.
         import_module('.'.join([app, module_name]))
+
+    from model_i18n import translator
+    from model_i18n.conf import TRANSLATED_APP_MODELS
+    from django.db import models
+
+    for app_path in TRANSLATED_APP_MODELS:
+        try:
+            # fix for admin register
+            import_module(app_path+'.admin')
+        except:
+            pass
+        from django.core.exceptions import ImproperlyConfigured
+
+        if "south" in settings.INSTALLED_APPS:
+            pass
+        model_conf = TRANSLATED_APP_MODELS[app_path]
+        for model_name in model_conf:
+            model_module = import_module(app_path+'.models')
+            try:
+                django_model = getattr(model_module, model_name)
+            except:
+                raise ImproperlyConfigured("Model %s does not exist on %s" % (model_name, app_path))
+            options = {'fields': model_conf[model_name]}
+            translator.register(django_model, **options)
+
+

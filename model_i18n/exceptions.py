@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class AlreadyRegistered(Exception):
     """Object is already registered"""
     pass
@@ -6,3 +7,4 @@ class AlreadyRegistered(Exception):
 class OptionWarning(Warning):
     """Warning about option values"""
     pass
+

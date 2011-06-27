@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Functions on this module are added to every manager on each multilingual model.
 """

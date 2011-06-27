@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.conf import settings
 
 # Translation model's common field default names.
@@ -28,6 +29,12 @@ CURRENT_LANGUAGE  = 'current_language'
 # Change form template and translation edition template
 CHANGE_TPL             = 'i18n/admin/change_form.html'
 CHANGE_TRANSLATION_TPL = 'i18n/admin/change_translation_form.html'
+
+# Autogenerate models translations for third party apps
+#
+# TRANSLATED_APP_MODELS['django.contrib.flatpages'] = { 'FlatPage': ('title', 'content',) }
+#
+TRANSLATED_APP_MODELS = getattr(settings, 'TRANSLATED_APP_MODELS', {})
 
 # Do we have multidb support? (post r11952)
 try:

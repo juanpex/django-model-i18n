@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import new
 import copy
 
@@ -28,18 +29,19 @@ class Translator(object):
     def __init__(self):
         self._registry = {} # model_class class -> translation_class instance
 
+
     def register(self, master_model, translation_class=None, **options):
         """
         Sets everything up for the given master model using a set of
         registration options (ModelTranslation attributes).
-  
+
         If a translation class isn't given, it will use ModelTranslation (the
         default translation options). If keyword arguments are given -- e.g.,
         fields -- they'll overwrite the translation_class attributes.
         """
         if master_model in self._registry:
             raise AlreadyRegistered('The model "%s" has is already registered for translation' % master_model.__name__)
-  
+
         # If not translation_class given use default options.
         if not translation_class:
             translation_class = ModelTranslation
@@ -140,7 +142,7 @@ class Translator(object):
         # manager (so users can create non multilingual managers)
         # XXX: Not sure what to do with _meta.abtract_managers
         for c, fname, manager in master_model._meta.concrete_managers:
-            self.setup_manager(manager) 
+            self.setup_manager(manager)
 
     def setup_manager(self, manager):
         """
@@ -207,7 +209,7 @@ def lang(instance, lang=None):
         return instance
     setattr(instance, CURRENT_LANGUAGE, lang)
     return instance
-    
+
 
 def switch_language(instance, lang=None):
     """Here we overrides the default fields with their translated

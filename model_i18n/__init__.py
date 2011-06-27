@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import inspect
+from threading import local
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -8,6 +10,8 @@ from model_i18n.utils import import_module
 
 
 VERSION = (0, 1, 0, 'alpha', 0)
+_active = local()
+
 
 def get_version():
     """ Returns application version """
@@ -20,6 +24,14 @@ def get_version():
         if VERSION[3] != 'final':
             version = '%s %s %s' % (version, VERSION[3], VERSION[4])
     return version
+
+
+def get_do_autotrans():
+    return getattr(_active, "value", True)
+
+
+def set_do_autotrans(v):
+   _active.value = v
 
 
 def _load_conf(*args, **kwargs):

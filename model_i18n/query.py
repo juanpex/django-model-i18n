@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import operator
 
 from django.db import connection
@@ -5,9 +6,11 @@ from django.db.models.sql import Query
 from django.db.models.query_utils import Q
 from django.db.models.sql.where import AND
 from django.db.models.query import QuerySet
+from django.utils import translation
 
+from model_i18n import get_do_autotrans
 from model_i18n.conf import ATTR_BACKUP_SUFFIX, CURRENT_LANGUAGES
-from model_i18n.utils import get_master_language
+from model_i18n.utils import get_master_language, get_translation_opt
 
 
 QN = connection.ops.quote_name # quote name
@@ -87,7 +90,7 @@ class TransJoin(QOuterJoins):
 
     def add_to_query(self, query, used_aliases):
         """
-        Delegates join to QOuterJoins and adds the needed fields to 
+        Delegates join to QOuterJoins and adds the needed fields to
         select list. The translateable fields will be in the form:
             <master model attribute name>_<language code>.
         Also current_languages attribute will be added with translation
@@ -185,27 +188,27 @@ class TransQuerySet(QuerySet):
         languages = filter(None, getattr(instance,
                                          CURRENT_LANGUAGES, '').split('_'))
         implicit = self.lang
-        from django.utils import translation
-        lang = translation.get_language()
         if implicit and implicit in languages:
             instance.switch_language(implicit) # switch to implicit language
         setattr(instance, CURRENT_LANGUAGES, languages)
-        from model_i18n.utils import get_translation_opt
-        lang_field = get_translation_opt(instance, 'language_field_name')
-        master_lang = get_master_language(self.model)
-        if lang != master_lang: 
-            try:
-                trans = instance.translations.get(**{lang_field: lang})
-                for field in instance._translation_model._transmeta.translatable_fields:
-                    setattr(instance, field, getattr(trans, field)) 
-            except:
-                pass
+
+        if get_do_autotrans():
+            lang = translation.get_language()
+            lang_field = get_translation_opt(instance, 'language_field_name')
+            master_lang = get_master_language(self.model)
+            if lang != master_lang:
+                try:
+                    trans = instance.translations.get(**{lang_field: lang})
+                    for field in instance._translation_model._transmeta.translatable_fields:
+                        setattr(instance, field, getattr(trans, field))
+                except:
+                    pass
         return instance
 
     def _clone(self, *args, **kwargs):
-        """ _clone override, setups languages requested and current 
+        """ _clone override, setups languages requested and current
         selected language"""
-        clone = super(TransQuerySet, self)._clone()
+        clone = super(TransQuerySet, self)._clone(*args, **kwargs)
         clone.lang = self.lang
         clone.languages = self.languages
         return clone

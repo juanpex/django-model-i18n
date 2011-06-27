@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Monkey patches module """
 from model_i18n.conf import MULTIDB_SUPPORT
 

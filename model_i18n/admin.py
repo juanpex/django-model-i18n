@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.defaults import patterns, url
@@ -17,6 +18,7 @@ from django.utils.decorators import method_decorator
 from model_i18n.exceptions import OptionWarning
 from model_i18n.utils import get_translation_opt
 from model_i18n.conf import CHANGE_TPL, CHANGE_TRANSLATION_TPL
+from model_i18n.decorators import autotranslate_view
 
 
 def setup_admin(master_model, translation_model):
@@ -42,7 +44,10 @@ def setup_admin(master_model, translation_model):
     model_admin.change_form_template = CHANGE_TPL
     model_admin.__class__.get_urls_orig = model_admin.__class__.get_urls
     model_admin.__class__.get_urls = get_urls
-    model_admin.__class__.i18n_change_view = i18n_change_view
+    model_admin.__class__.i18n_change_view = autotranslate_view(i18n_change_view)
+    model_admin.__class__.add_view = autotranslate_view(model_admin.__class__.add_view)
+    model_admin.__class__.change_view = autotranslate_view(model_admin.__class__.change_view)
+    model_admin.__class__.changelist_view = autotranslate_view(model_admin.__class__.changelist_view)
 
 
 def get_urls(instance):
@@ -51,7 +56,7 @@ def get_urls(instance):
     to the end."""
     # original urls
     urls = instance.get_urls_orig()
-    return urls[:-1] + patterns('', 
+    return urls[:-1] + patterns('',
                 url(r'^(?P<obj_id>\d+)/(?P<language>[a-z]{2})/$',
                     instance.i18n_change_view),
                 urls[-1])
@@ -63,6 +68,7 @@ def i18n_change_view(instance, request, obj_id, language):
     """Change view for i18n values for current instance. This is a
     simplified django-admin change view which displays i18n fields
     for current model/id."""
+
     opts = instance.model._meta
     obj = instance.get_object(request, obj_id)
 
