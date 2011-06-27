@@ -48,6 +48,17 @@ def autodiscover(module_name='translations'):
     from model_i18n.conf import TRANSLATED_APP_MODELS
     from django.db import models
 
+    #if "south" in settings.INSTALLED_APPS:
+    #    from django.core.management import call_command
+    #    try:
+    #        # execute syncdb
+    #        call_command('syncdb', interactive=False, verbosity=0)
+    #        # execute migrate
+    #        call_command('migrate', verbosity=0)
+    #        # execute new translated apps with yours initials if
+    #        call_command('migrate_trans', verbosity=0)
+    #    except:
+    #        pass
     for app_path in TRANSLATED_APP_MODELS:
         try:
             # fix for admin register
@@ -56,8 +67,7 @@ def autodiscover(module_name='translations'):
             pass
         from django.core.exceptions import ImproperlyConfigured
 
-        if "south" in settings.INSTALLED_APPS:
-            pass
+
         model_conf = TRANSLATED_APP_MODELS[app_path]
         for model_name in model_conf:
             model_module = import_module(app_path+'.models')
@@ -67,5 +77,3 @@ def autodiscover(module_name='translations'):
                 raise ImproperlyConfigured("Model %s does not exist on %s" % (model_name, app_path))
             options = {'fields': model_conf[model_name]}
             translator.register(django_model, **options)
-
-
