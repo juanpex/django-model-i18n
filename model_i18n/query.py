@@ -169,10 +169,9 @@ class TransQuerySet(QuerySet):
         """ Invokes QuerySet iterator method and tries to change instance
         attributes with translated values if any translation was retrieved
         """
-        clone = self._clone()
-        clone = clone.set_language(translation.get_language())
-        for obj in super(TransQuerySet, clone).iterator():
-            yield clone.change_fields(obj)
+        for obj in super(TransQuerySet, self).iterator():
+            yield self.change_fields(obj)
+
 
     def change_fields(self, instance):
         """Here we backups master values in <name>_<ATTR_BACKUP_SUFFIX>
@@ -182,10 +181,8 @@ class TransQuerySet(QuerySet):
         trans_opts = instance._translation_model._transmeta
 
         # backup master value on <name>_<suffix> attribute
-        apply(lambda name, n: setattr(instance,
-                                   '_'.join((name, ATTR_BACKUP_SUFFIX)),
-                                   getattr(instance, name, None)),
-               trans_opts.translatable_fields)
+        for name in trans_opts.translatable_fields:
+            setattr(instance, '_'.join((name, ATTR_BACKUP_SUFFIX)), getattr(instance, name, None))
 
         languages = filter(None, getattr(instance,
                                          CURRENT_LANGUAGES, '').split('_'))
@@ -193,18 +190,6 @@ class TransQuerySet(QuerySet):
         if implicit and implicit in languages:
             instance.switch_language(implicit) # switch to implicit language
         setattr(instance, CURRENT_LANGUAGES, languages)
-
-        #if get_do_autotrans() and False:
-        #    lang = translation.get_language()
-        #    lang_field = get_translation_opt(instance, 'language_field_name')
-        #    master_lang = get_master_language(self.model)
-        #    if lang != master_lang:
-        #        try:
-        #            trans = instance.translations.get(**{lang_field: lang})
-        #            for field in instance._translation_model._transmeta.translatable_fields:
-        #                setattr(instance, field, getattr(trans, field))
-        #        except:
-        #            pass
         return instance
 
     def _clone(self, *args, **kwargs):

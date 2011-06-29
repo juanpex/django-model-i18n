@@ -91,9 +91,13 @@ def i18n_change_view(instance, request, obj_id, language):
     fields = get_translation_opt(obj, 'translatable_fields')
     lang_field = get_translation_opt(obj, 'language_field_name')
     master_field = get_translation_opt(obj, 'master_field_name')
+    related_name = get_translation_opt(obj, 'related_name')
 
     try:
-        trans = obj.translations.get(**{lang_field: language})
+        manager = getattr(obj, related_name) # search for related_name manager
+        if manager is None: # if related_name in None use default value "translations"
+            manager = obj.translations
+        trans = manager.get(**{lang_field: language})
     except obj._translation_model.DoesNotExist: # new translation
         trans = obj._translation_model(**{lang_field: language,
                                           master_field: obj})
