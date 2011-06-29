@@ -98,25 +98,24 @@ def i18n_change_view(instance, request, obj_id, language):
         trans = obj._translation_model(**{lang_field: language,
                                           master_field: obj})
 
-    ModelForm = modelform_factory(obj._translation_model, fields=fields)
+    TransModelForm = modelform_factory(obj._translation_model, fields=fields)
 
     if request.method == 'POST':
-        form = ModelForm(instance=trans, data=request.POST,
+        form = TransModelForm(instance=trans, data=request.POST,
                          files=request.FILES)
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(request.path)
     else:
-        form = ModelForm(instance=trans)
+        form = TransModelForm(instance=trans)
 
-    adminform = admin.helpers.AdminForm(form, [(None, {'fields': fields})],
-                                        {}, None)
+    adminform = admin.helpers.AdminForm(form, [(None, {'fields': fields})], {})
 
     context = {
         'title': _('Translation %s') % force_unicode(opts.verbose_name),
         'adminform': adminform, 'original': obj,
         'is_popup': request.REQUEST.has_key('_popup'),
-        'errors': admin.helpers.AdminErrorList(form, None),
+        'errors': admin.helpers.AdminErrorList(form, []),
         'root_path': instance.admin_site.root_path,
         'app_label': opts.app_label, 'trans': True, 'lang': language,
         'current_language': dict(settings.LANGUAGES)[language],

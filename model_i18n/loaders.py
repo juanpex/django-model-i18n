@@ -48,17 +48,17 @@ def autodiscover(module_name='translations'):
     from model_i18n.conf import TRANSLATED_APP_MODELS
     from django.db import models
 
-    #if "south" in settings.INSTALLED_APPS:
-    #    from django.core.management import call_command
-    #    try:
-    #        # execute syncdb
-    #        call_command('syncdb', interactive=False, verbosity=0)
-    #        # execute migrate
-    #        call_command('migrate', verbosity=0)
-    #        # execute new translated apps with yours initials if
-    #        call_command('migrate_trans', verbosity=0)
-    #    except:
-    #        pass
+    if "south" in settings.INSTALLED_APPS:
+        from django.core.management import call_command
+        try:
+            # execute syncdb
+            call_command('syncdb', interactive=False, verbosity=0)
+            # execute migrate
+            call_command('migrate', verbosity=0)
+            # execute new translated apps with yours initials if
+            call_command('migrate_trans', verbosity=0)
+        except:
+            pass
     for app_path in TRANSLATED_APP_MODELS:
         try:
             # fix for admin register
