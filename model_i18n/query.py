@@ -2,6 +2,7 @@
 import operator
 
 from django.db import connection
+from django.db import models
 from django.db.models.sql import Query
 from django.db.models.query_utils import Q
 from django.db.models.sql.where import AND
@@ -67,8 +68,8 @@ class TransJoin(QOuterJoins):
         trans_model = model._translation_model
         trans_opts = trans_model._transmeta
 
-        alias = 'translation_%s' % lang
-        self.data = { alias: lang }
+        alias = 'translation_%s' % lang[:2]
+        self.data = { alias: lang[:2] }
 
         # Join data
         related_col  = trans_opts.master_field_name
@@ -78,14 +79,15 @@ class TransJoin(QOuterJoins):
         master_pk    = model._meta.pk.column
 
         where = '%(m_table)s.%(m_pk)s = %(alias)s.%(t_fk)s %(and)s '\
-                '%(alias)s.%(t_lang)s = "%(lang)s"' % {
+                "%(alias)s.%(t_lang)s = '%(lang)s'" % {
                     'm_table': QN(master_table),
                     'm_pk':  QN(master_pk),
                     'and': AND,
-                    'alias': alias,
+                    'alias': QN(alias),
                     't_fk': QN(trans_fk),
                     't_lang': QN(trans_opts.language_field_name),
                     'lang': lang }
+
         super(TransJoin, self).__init__(**{ alias: (trans_table, where) })
 
     def add_to_query(self, query, used_aliases):
@@ -109,7 +111,7 @@ class TransJoin(QOuterJoins):
             select.update(('%s_%s' % (name, lang),
                            '%s.%s' % (alias, QN(name)))
                                 for name in fields)
-        select[CURRENT_LANGUAGES] = '"%s"' % '_'.join(self.data.itervalues())
+        select[CURRENT_LANGUAGES] = '\'%s\'' % '_'.join(self.data.itervalues())
         query.add_extra(select, None, None, None, None, None)
 
     def __and__(self, right):
@@ -136,34 +138,30 @@ class TransQuerySet(QuerySet):
         """ Defines/switch query set implicit language, attributes on
         result instances will be switched to this language on change_fields
         """
-        return self.get_translations([language], language)
+        languages = list(self.languages)
+        if language and (language in languages or language == get_master_language(self.model)):
+            return self
+        languages.append(language)
+        self.languages = set(languages)
+        self.lang = language
+        return self.filter(TransJoin(self.model, self.lang))
 
-    def get_translations(self, languages, language=None):
-        """ Adds any non-master new languages in parameter to requested
-        languages list (self.languages) and build the new query joins rules
+    def filter(self, *args, **kwargs):
+        if self.lang and self.lang != get_master_language(self.model):
+            from model_i18n.utils import get_translation_opt
+            translatable_fields = get_translation_opt(self.model, 'translatable_fields')
+            aps = []
+            for k, v in kwargs.items():
+                if "translations" not in k and k in translatable_fields:
+                    k = "translations__%s" % k
+                aps.append(Q(**{k: v}))
+            if aps:
+                qu = aps.pop()
+                for item in aps:
+                    qu &= item
+                return super(TransQuerySet, self).filter(qu)
+        return super(TransQuerySet, self).filter(*args, **kwargs)
 
-        We do not do anything if no new languages were passed
-
-        `language` parameter will be set as implicit language (self.lang)
-                   if passed
-        """
-        if language and language not in languages:
-            languages.append(language)
-
-        # filter added languages and master language
-        master = get_master_language(self.model)
-        new = set((lang for lang in languages
-                        if lang and lang != master)) - self.languages
-
-        if language not in (self.lang, master): # set implicit language
-            self.lang = language
-
-        if new: # if there's any language to add
-            rules = [ TransJoin(self.model, lang) for lang in new ]
-            join = reduce(operator.and_, rules) if len(rules) > 1 else rules[0]
-            self.languages |= new
-            return self.filter(join)
-        return self
 
     def iterator(self):
         """ Invokes QuerySet iterator method and tries to change instance
@@ -171,7 +169,6 @@ class TransQuerySet(QuerySet):
         """
         for obj in super(TransQuerySet, self).iterator():
             yield self.change_fields(obj)
-
 
     def change_fields(self, instance):
         """Here we backups master values in <name>_<ATTR_BACKUP_SUFFIX>

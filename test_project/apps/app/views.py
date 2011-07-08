@@ -1,7 +1,11 @@
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 
 from app.models import Item
 
 class DefaultView(ListView):
 	template_name = "base.html"
-	queryset = Item.objects.all()
+	model = Item
+
+class ItemDetailView(DetailView):
+    template_name = "detail.html"
+    model = Item

@@ -20,3 +20,5 @@ dist
 *.pyc
 *.pyo
 *.tmp*
+local_settings.py
+django

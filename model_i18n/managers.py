@@ -17,10 +17,10 @@ def get_query_set(self):
         kwargs['using'] = qs._db
     queryset = TransQuerySet(self.model, **kwargs)
     if get_do_autotrans():
-        queryset = queryset.set_language(get_language())
+        queryset = queryset.set_language(get_language()[:2])
     return queryset
 
 
 def set_language(self, language_code):
     """ Sets the current language """
-    return self.get_query_set().set_language(language_code)
+    return self.get_query_set().set_language(language_code[:2])

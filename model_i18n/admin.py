@@ -95,8 +95,6 @@ def i18n_change_view(instance, request, obj_id, language):
 
     try:
         manager = getattr(obj, related_name) # search for related_name manager
-        if manager is None: # if related_name in None use default value "translations"
-            manager = obj.translations
         trans = manager.get(**{lang_field: language})
     except obj._translation_model.DoesNotExist: # new translation
         trans = obj._translation_model(**{lang_field: language,
@@ -108,7 +106,9 @@ def i18n_change_view(instance, request, obj_id, language):
         form = TransModelForm(instance=trans, data=request.POST,
                          files=request.FILES)
         if form.is_valid():
-            form.save()
+            trans = form.save()
+            obj.translations.add(trans)
+            obj.save()
             return HttpResponseRedirect(request.path)
     else:
         form = TransModelForm(instance=trans)

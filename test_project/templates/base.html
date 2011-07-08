@@ -4,12 +4,24 @@
 {% for lang in LANGUAGES %}
 <a href="{% url setlang %}?language={{ lang.0 }}">{{ lang.1 }}</a>
 {% endfor %}
+
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
 <br>
-{{ LANGUAGE_CODE }}
+
+{% block content %}
 <ul>
 {% for item in item_list %}
-<li>{{ item.title }} - {{ item.slug }}</li>
+<li><a href="/item/{{ item.slug }}">{{ item.title }}</a></li>
 {% endfor %}
 <ul>
+{% endblock %}
+
 </body>
 </html>

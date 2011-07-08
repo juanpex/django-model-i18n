@@ -14,14 +14,12 @@ LANGUAGE_CODE = 'en'
 MODEL_I18N_CONF = 'test_project.i18n_conf'
 MODEL_I18N_MASTER_LANGUAGE = LANGUAGE_CODE
 
-#-
-
 PROJECT_DIR = dirname(abspath(__file__))
 sys.path.append(join(PROJECT_DIR, 'apps'))
 sys.path.append(join(PROJECT_DIR, '..'))
 
 TEMPLATE_DIRS = (
-    join(PROJECT_DIR, "templates"), 
+    join(PROJECT_DIR, "templates"),
 )
 
 INSTALLED_APPS = (
@@ -55,10 +53,26 @@ ROOT_URLCONF = 'test_project.urls'
 
 SECRET_KEY = '+h78sko_^A,k,sm77^s(CRGsL&^5laxR()/)&1&sw(290nm'
 
-DATABASE_ENGINE = 'sqlite3'
-DATABASE_NAME = '%s/test_project.db' % PROJECT_DIR
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': '%s/test_project.db' % PROJECT_DIR,
+    }
+}
+
+TEST_DATABASE_CHARSET = "utf8"
+TEST_DATABASE_COLLATION = "utf8_general_ci"
+
+DATABASE_SUPPORTS_TRANSACTIONS = True
 
 DEBUG = True
+TEMPLATE_DEBUG = DEBUG
+
+USE_I18N = True
+
+CACHE_BACKEND = 'locmem:///'
+
 
 try:
     from local_settings import *

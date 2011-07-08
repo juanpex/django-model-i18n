@@ -58,7 +58,7 @@ class Translator(object):
 
         # Set up master_model as a multilingual model using translation_class options
         translation_model = self.create_translation_model(master_model, opts)
-        models.register_models(master_model._meta.app_label, translation_model)
+        master_model.add_to_class("translations", models.ManyToManyField(translation_model, blank=True, null=True, editable=False))
         self.setup_master_model(master_model, translation_model) # This probably will become a class method soon.
         setup_admin(master_model, translation_model) # Setup django-admin support
 
@@ -76,6 +76,7 @@ class Translator(object):
         class Meta:
             app_label = master_model._meta.app_label
             db_table = opts.db_table
+            unique_together = (opts.master_field_name, opts.language_field_name)
         attrs['Meta'] = Meta
 
         class TranslationMeta:
@@ -86,7 +87,7 @@ class Translator(object):
             master_field_name = opts.master_field_name
             related_name = opts.related_name
         attrs['_transmeta'] = TranslationMeta
-
+        opts.related_name = "parents"
         # Common translation model fields
         common_fields = {
             # Translation language
@@ -94,7 +95,7 @@ class Translator(object):
                 verbose_name=_('language'), max_length=10,
                 choices=settings.LANGUAGES),
             # Master instance FK
-            opts.master_field_name: models.ForeignKey(master_model,
+            opts.master_field_name: models.ForeignKey(master_model, db_index=True,
                 verbose_name=_('master'), related_name=opts.related_name),
         }
         attrs.update(common_fields)
@@ -143,6 +144,8 @@ class Translator(object):
         # XXX: Not sure what to do with _meta.abtract_managers
         for c, fname, manager in master_model._meta.concrete_managers:
             self.setup_manager(manager)
+
+
 
     def setup_manager(self, manager):
         """
