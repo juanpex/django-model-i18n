@@ -1,3 +1,4 @@
+
 =================
 django-model-i18n 
 =================
@@ -91,10 +92,26 @@ It has good integration with django.contib.admin. It automatically configures Mo
 API EXAMPLES
 ============
 
-Item.objects.set_language("es").filter(translations__title__contains='sometext')
-or
-Item.objects.filter(translations___language='es', translations__title__contains='sometext')
+Example 1::
 
-items = Item.objects.filter(Q(translations___language='es') | Q(translations___language='es'))
-items = items.exclude(category__name='gfys')
-items = items.filter(Q(title__icontains='foo') | Q(translations__title__icontains='foo'))
+	Item.objects.set_language("es").filter(translations__title__contains='sometext')
+	or
+	Item.objects.filter(translations___language='es', translations__title__contains='sometext')
+
+Example 2::
+
+	items = Item.objects.filter(Q(translations___language='es') | Q(translations___language='es'))
+	items = items.exclude(category__name='gfys')
+	items = items.filter(Q(title__icontains='foo') | Q(translations__title__icontains='foo'))
+
+
+
+
+
+
+
+
+
+
+
+
