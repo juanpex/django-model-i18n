@@ -31,8 +31,7 @@ class Translator(object):
             app_path = ".".join(master_model.split(".")[:-1])
             master_module_models = import_module(app_path + '.models')
             master_model = getattr(master_module_models, master_model.split(".")[-1])
-            #print master_model
-            #return
+        
         if master_model in self._registry:
             raise AlreadyRegistered('The model "%s" has is already \
             registered for translation' % master_model.__name__)
@@ -72,6 +71,12 @@ class Translator(object):
 
     def create_translation_model(self, master_model, opts):
         attrs = {'__module__': master_model.__module__}
+
+        if opts.master_language not in dict(settings.LANGUAGES):
+            from model_i18n.exceptions import OptionWarning
+            msg = '\nCode language "%s" not exist: Avaible languages are: %s.\n The model %s take master languages "%s"' % \
+            (opts.master_language , " ".join(dict(settings.LANGUAGES).keys()), master_model.__name__, settings.MODEL_I18N_MASTER_LANGUAGE)
+            print OptionWarning(msg)
 
         # creates unique_together for master_model
         trans_unique_together = []

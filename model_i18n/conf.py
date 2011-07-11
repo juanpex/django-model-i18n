@@ -37,7 +37,7 @@ CHANGE_TRANSLATION_TPL = 'i18n/admin/change_translation_form.html'
 #
 # TRANSLATED_APP_MODELS = {
 #    'django.contrib.flatpages': {
-#        'FlatPage': ('title', 'content',)
+#        'FlatPage': {'fields': ('title', 'content',)}
 #    },
 # }
 TRANSLATED_APP_MODELS = getattr(settings, 'TRANSLATED_APP_MODELS', {})

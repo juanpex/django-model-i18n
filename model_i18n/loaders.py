@@ -60,5 +60,4 @@ def autodiscover(module_name='translations'):
             except:
                 raise ImproperlyConfigured("Model %s does not exist on %s" % \
                     (model_name, app_path))
-            options = {'fields': model_conf[model_name]['fields'], }
-            translator.register(django_model, **options)
+            translator.register(django_model, **model_conf[model_name])
