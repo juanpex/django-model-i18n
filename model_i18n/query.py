@@ -1,20 +1,14 @@
 # -*- coding: utf-8 -*-
-import operator
-
 from django.db import connection
-from django.db import models
-from django.db.models.sql import Query
-from django.db.models.query_utils import Q
-from django.db.models.sql.where import AND
 from django.db.models.query import QuerySet
-from django.utils import translation
-
-from model_i18n import get_do_autotrans
+from django.db.models.query_utils import Q
+from django.db.models.sql import Query
+from django.db.models.sql.where import AND
 from model_i18n.conf import ATTR_BACKUP_SUFFIX, CURRENT_LANGUAGES
-from model_i18n.utils import get_master_language, get_translation_opt
+from model_i18n.utils import get_master_language
 
 
-QN = connection.ops.quote_name # quote name
+QN = connection.ops.quote_name  # quote name
 
 
 class QOuterJoins(Q):
@@ -43,7 +37,7 @@ class QOuterJoins(Q):
             query.custom_joins += [
                 " %s %s AS %s ON %s" % (jtype, table, alias, where)
                     for alias, (table, where) in self.joins.iteritems()
-                        if alias not in used_aliases ]
+                        if alias not in used_aliases]
 
     def __and__(self, right):
         """ AND operator. Useful to setup several joins rules """
@@ -69,14 +63,14 @@ class TransJoin(QOuterJoins):
         trans_opts = trans_model._transmeta
 
         alias = 'translation_%s' % lang[:2]
-        self.data = { alias: lang[:2] }
+        self.data = {alias: lang[:2]}
 
         # Join data
-        related_col  = trans_opts.master_field_name
-        trans_table  = trans_model._meta.db_table
-        trans_fk     = trans_model._meta.get_field(related_col).column
+        related_col = trans_opts.master_field_name
+        trans_table = trans_model._meta.db_table
+        trans_fk = trans_model._meta.get_field(related_col).column
         master_table = model._meta.db_table
-        master_pk    = model._meta.pk.column
+        master_pk = model._meta.pk.column
 
         where = '%(m_table)s.%(m_pk)s = %(alias)s.%(t_fk)s %(and)s '\
                 "%(alias)s.%(t_lang)s = '%(lang)s'" % {
@@ -86,9 +80,9 @@ class TransJoin(QOuterJoins):
                     'alias': QN(alias),
                     't_fk': QN(trans_fk),
                     't_lang': QN(trans_opts.language_field_name),
-                    'lang': lang }
+                    'lang': lang}
 
-        super(TransJoin, self).__init__(**{ alias: (trans_table, where) })
+        super(TransJoin, self).__init__(**{alias: (trans_table, where)})
 
     def add_to_query(self, query, used_aliases):
         """
@@ -129,6 +123,7 @@ class TransQuerySet(QuerySet):
     QuerySet that joins with translation table, retrieves translated
     values and setup model attributes
     """
+
     def __init__(self, *args, **kwargs):
         self.languages = set()
         self.lang = None
@@ -139,7 +134,8 @@ class TransQuerySet(QuerySet):
         result instances will be switched to this language on change_fields
         """
         languages = list(self.languages)
-        if language and (language in languages or language == get_master_language(self.model)):
+        if language and (language in languages or \
+           language == get_master_language(self.model)):
             return self
         languages.append(language)
         self.languages = set(languages)
@@ -149,7 +145,8 @@ class TransQuerySet(QuerySet):
     def filter(self, *args, **kwargs):
         if self.lang and self.lang != get_master_language(self.model):
             from model_i18n.utils import get_translation_opt
-            translatable_fields = get_translation_opt(self.model, 'translatable_fields')
+            translatable_fields = \
+            get_translation_opt(self.model, 'translatable_fields')
             aps = []
             for k, v in kwargs.items():
                 if "translations" not in k and k in translatable_fields:
@@ -161,7 +158,6 @@ class TransQuerySet(QuerySet):
                     qu &= item
                 return super(TransQuerySet, self).filter(qu)
         return super(TransQuerySet, self).filter(*args, **kwargs)
-
 
     def iterator(self):
         """ Invokes QuerySet iterator method and tries to change instance
@@ -176,16 +172,16 @@ class TransQuerySet(QuerySet):
         instance set_language.
         """
         trans_opts = instance._translation_model._transmeta
-
         # backup master value on <name>_<suffix> attribute
         for name in trans_opts.translatable_fields:
-            setattr(instance, '_'.join((name, ATTR_BACKUP_SUFFIX)), getattr(instance, name, None))
+            value = getattr(instance, name, None)
+            setattr(instance, '_'.join((name, ATTR_BACKUP_SUFFIX)), value)
 
         languages = filter(None, getattr(instance,
                                          CURRENT_LANGUAGES, '').split('_'))
         implicit = self.lang
         if implicit and implicit in languages:
-            instance.switch_language(implicit) # switch to implicit language
+            instance.switch_language(implicit)  # switch to implicit language
         setattr(instance, CURRENT_LANGUAGES, languages)
         return instance
 

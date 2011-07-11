@@ -14,6 +14,9 @@ def autodiscover(module_name='translations'):
     """
     import imp
     from django.conf import settings
+    from django.contrib import admin
+
+    admin.autodiscover()
 
     for app in settings.INSTALLED_APPS:
         # For each app, we need to look for `module_name` in that app's
@@ -40,29 +43,22 @@ def autodiscover(module_name='translations'):
         except ImportError, e:
             continue
 
-        # Step 3: import the app's translation file. If this has errors we want them
-        # to bubble up.
+        # Step 3: import the app's translation file.
+        # If this has errors we want them to bubble up.
         import_module('.'.join([app, module_name]))
 
     from model_i18n import translator
     from model_i18n.conf import TRANSLATED_APP_MODELS
-    from django.db import models
+    from django.core.exceptions import ImproperlyConfigured
 
     for app_path in TRANSLATED_APP_MODELS:
-        try:
-            # fix for admin register
-            import_module(app_path+'.admin')
-        except:
-            pass
-        from django.core.exceptions import ImproperlyConfigured
-
-
         model_conf = TRANSLATED_APP_MODELS[app_path]
         for model_name in model_conf:
-            model_module = import_module(app_path+'.models')
+            model_module = import_module(app_path + '.models')
             try:
                 django_model = getattr(model_module, model_name)
             except:
-                raise ImproperlyConfigured("Model %s does not exist on %s" % (model_name, app_path))
-            options = {'fields': model_conf[model_name]}
+                raise ImproperlyConfigured("Model %s does not exist on %s" % \
+                    (model_name, app_path))
+            options = {'fields': model_conf[model_name]['fields'], }
             translator.register(django_model, **options)

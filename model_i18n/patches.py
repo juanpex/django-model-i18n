@@ -27,13 +27,14 @@ dj_get_from_clause = GetFromClauseClass.get_from_clause
 def MP_get_from_clause(self):
     """ Add custom_joins rules built by a QOuterJoins instance
     to result from django get_from_clause method """
-    result, params = dj_get_from_clause(self) # django
+    result, params = dj_get_from_clause(self)  # django
     return (result + get_custom_joins(self), params)
+
 
 def MP_clone(self, *args, **kwargs):
     """ Also clone custom_joins attribute (if any) when cloning a
     query object """
-    query = dj_clone(self, *args, **kwargs) # django
+    query = dj_clone(self, *args, **kwargs)  # django
     if hasattr(self, 'custom_joins'):
         query.custom_joins = self.custom_joins[:]
     return query

@@ -1,136 +1,93 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
-from django.conf import settings
 from django.conf.urls.defaults import patterns, url
-from django.db import transaction
-from django.http import Http404, HttpResponseRedirect
-from django.core.exceptions import PermissionDenied
-from django.forms.models import modelform_factory
-from django.views.decorators.csrf import csrf_protect
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from django.utils.translation import ugettext_lazy as _
-from django.utils.html import escape
-from django.utils.encoding import force_unicode
-from django.utils.decorators import method_decorator
+from django.contrib import admin
 
-
+from model_i18n.conf import CHANGE_TPL
 from model_i18n.exceptions import OptionWarning
 from model_i18n.utils import get_translation_opt
-from model_i18n.conf import CHANGE_TPL, CHANGE_TRANSLATION_TPL
-from model_i18n.decorators import autotranslate_view
 
 
 def setup_admin(master_model, translation_model):
-    """Setup django-admin support.
-    Support is provided with a new set of urls that and custom views
-    that allow i18n fields edition and aggregation for defined languages.
     """
-    model_admin = admin.site._registry.get(master_model)
-    if not model_admin:
-        # register model in django-admin with default values
-        admin.site.register(master_model, admin.ModelAdmin)
-        model_admin = admin.site._registry.get(master_model)
-    elif model_admin.change_form_template:
+    Setup django.contrib,admin support.
+    """
+    madmin = admin.site._registry.get(master_model)
+
+    # if app not define modeladmin exit setup
+    if not madmin:
+        return
+
+    maclass = madmin.__class__
+    if madmin.change_form_template:
         # default change view is populated with links to i18n edition
         # sections but won't be available if change_form_template is
         # overrided on model admin options, in such case, extend from
         # model_i18n/template/change_form.html
-        msg = '"%s" overrides change_form_template, extend %s to get i18n support' \
-                    % (model_admin.__class__, CHANGE_TPL)
+        msg = '"%s" overrides change_form_template, \
+        extend %s to get i18n support' % (maclass, CHANGE_TPL)
         warnings.warn(OptionWarning(msg))
 
-    # setup admin methods, etc
-    model_admin.change_form_template = CHANGE_TPL
-    model_admin.__class__.get_urls_orig = model_admin.__class__.get_urls
-    model_admin.__class__.get_urls = get_urls
-    model_admin.__class__.i18n_change_view = autotranslate_view(i18n_change_view)
-    model_admin.__class__.add_view = autotranslate_view(model_admin.__class__.add_view)
-    model_admin.__class__.change_view = autotranslate_view(model_admin.__class__.change_view)
-    model_admin.__class__.changelist_view = autotranslate_view(model_admin.__class__.changelist_view)
+    from model_i18n.admin_helpers import TranslationModelAdmin
+
+    TranslationModelAdmin = copy_base_fields(maclass, TranslationModelAdmin)
+
+    admin.site.unregister(master_model)
+    admin.site.register(master_model, TranslationModelAdmin)
+    madmin = admin.site._registry.get(master_model)
+    maclass = madmin.__class__
+
+    trans_inlines = get_translation_opt(master_model, 'inlines')
+    if not trans_inlines:
+        return
+
+    for i in madmin.inlines:
+        if i.model in [t.model for t in trans_inlines]:
+            inline_base_class = i.__bases__[0]
+            iac = type("%sTranslator" % (i.__name__), (inline_base_class,), {})
+            inline_admin_class = iac
+            inline_admin_class.model = i.model
+            maclass.i18n_inlines.append(inline_admin_class)
+
+    for iclass in maclass.i18n_inlines:
+        inline_instance = iclass(master_model._translation_model, admin.site)
+        maclass.i18n_inline_instances.append(inline_instance)
+
+
+def copy_base_fields(base, admin):
+    attr_names = (
+    'list_display',
+    'list_display_links',
+    'list_filter',
+    'list_select_related',
+    'list_per_page',
+    'list_editable',
+    'search_fields',
+    'date_hierarchy',
+    'save_as',
+    'save_on_top',
+    'ordering',
+    'inlines',
+    'add_form_template',
+    'change_list_template',
+    'delete_confirmation_template',
+    'delete_selected_confirmation_template',
+    'object_history_template',
+    'actions',
+    'action_form',
+    'actions_on_top',
+    'actions_on_bottom',
+    'actions_selection_counter',
+    'fieldsets'
+    )
+    for attr in attr_names:
+        setattr(admin, attr, getattr(base, attr))
+    return admin
 
 
 def get_urls(instance):
-    """Admin get_urls override to add i18n edition view. Last url is
-    for django-admin change view, it's a bit gredy, so we kept it back
-    to the end."""
     # original urls
     urls = instance.get_urls_orig()
     return urls[:-1] + patterns('',
                 url(r'^(?P<obj_id>\d+)/(?P<language>[a-z]{2})/$',
                     instance.i18n_change_view),
                 urls[-1])
-
-
-@method_decorator(csrf_protect)
-@transaction.commit_on_success
-def i18n_change_view(instance, request, obj_id, language):
-    """Change view for i18n values for current instance. This is a
-    simplified django-admin change view which displays i18n fields
-    for current model/id."""
-
-    opts = instance.model._meta
-    obj = instance.get_object(request, obj_id)
-
-    if not instance.has_change_permission(request, obj):
-        raise PermissionDenied
-
-    if obj is None:
-        msg = _('%(name)s object with primary key %(key)r does not exist.')
-        raise Http404(msg % {'name': force_unicode(opts.verbose_name),
-                             'key': escape(obj_id)})
-
-    if language not in dict(settings.LANGUAGES):
-        raise Http404(_('Incorrect language %(lang)s') % {'lang': language})
-
-    master_language = get_translation_opt(obj, 'master_language')
-    if language == master_language:
-        # redirect to instance admin on default language
-        return HttpResponseRedirect('../')
-
-    fields = get_translation_opt(obj, 'translatable_fields')
-    lang_field = get_translation_opt(obj, 'language_field_name')
-    master_field = get_translation_opt(obj, 'master_field_name')
-    related_name = get_translation_opt(obj, 'related_name')
-
-    try:
-        manager = getattr(obj, related_name) # search for related_name manager
-        trans = manager.get(**{lang_field: language})
-    except obj._translation_model.DoesNotExist: # new translation
-        trans = obj._translation_model(**{lang_field: language,
-                                          master_field: obj})
-
-    TransModelForm = modelform_factory(obj._translation_model, fields=fields)
-
-    if request.method == 'POST':
-        form = TransModelForm(instance=trans, data=request.POST,
-                         files=request.FILES)
-        if form.is_valid():
-            trans = form.save()
-            obj.translations.add(trans)
-            obj.save()
-            return HttpResponseRedirect(request.path)
-    else:
-        form = TransModelForm(instance=trans)
-
-    adminform = admin.helpers.AdminForm(form, [(None, {'fields': fields})], {})
-
-    context = {
-        'title': _('Translation %s') % force_unicode(opts.verbose_name),
-        'adminform': adminform, 'original': obj,
-        'is_popup': request.REQUEST.has_key('_popup'),
-        'errors': admin.helpers.AdminErrorList(form, []),
-        'root_path': instance.admin_site.root_path,
-        'app_label': opts.app_label, 'trans': True, 'lang': language,
-        'current_language': dict(settings.LANGUAGES)[language],
-        # override some values to provide an useful template
-        'add': False, 'change': True,
-        'has_change_permission_orig': True, # backup
-        'has_add_permission': False, 'has_change_permission': False,
-        'has_delete_permission': False, # hide delete link for now
-        'has_file_field': True, 'save_as': False, 'opts': instance.model._meta,
-    }
-
-    ctx = RequestContext(request, current_app=instance.admin_site.name)
-    return render_to_response(CHANGE_TRANSLATION_TPL, context,
-                              context_instance=ctx)

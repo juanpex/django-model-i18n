@@ -10,11 +10,12 @@
      <a href="../../">{{ opts.verbose_name_plural|capfirst }}</a> &rsaquo;
      <a href="../">{{ original|truncatewords:"18" }}</a>{% if trans %} &rsaquo;{% endif %}
    {% else %}
-     {{ opts.verbose_name_plural|capfirst }} &rsaquo;
-     {{ original|truncatewords:"18" }}</a>{% if trans %} &rsaquo;{% endif %}
+     <a href="../../">{{ opts.verbose_name_plural|capfirst }}</a> &rsaquo;
+     <a href="../">{{ original|truncatewords:"18" }}</a>{% if trans %} &rsaquo;{% endif %}
    {% endif %}
    {{ current_language|title }}
 </div>
+
 {% else %}{{ block.super }}{% endif %}<form>{% include "i18n/admin/language_links.html" %}</form>
 {% endblock %}
 

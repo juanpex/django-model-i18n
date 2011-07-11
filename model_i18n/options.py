@@ -15,7 +15,8 @@ class ModelTranslation(object):
         - default_language [string]
             Default language used to retrieve translations from database
               * active
-                  Current active language from django.utils.translation.get_language()
+                  Current active language from
+                  django.utils.translation.get_language()
               * master
                   Master defined language (see master_language)
               * language code
@@ -26,12 +27,14 @@ class ModelTranslation(object):
             MODEL_I18N_MASTER_LANGUAGE setting
 
         - related_name
-            Master model related name, by default RELATED_NAME translation model
+            Master model related name, by default
+            RELATED_NAME translation model
             will be accessible throw this name
 
         - db_table [string]
-            Table name which holds translation for a model, if not defined, then
-            name is built using master table and TRANSLATION_TABLE_SUFFIX suffix
+            Table name which holds translation for a model, if not defined,
+            then name is built using master table
+            and TRANSLATION_TABLE_SUFFIX suffix
 
         - language_field_name [string]
             Column name which holds translation language, LANG_COLUMN_NAME by
@@ -39,9 +42,13 @@ class ModelTranslation(object):
 
         - master_field_name [string]
             Column name which holds master model pk, REL_COLUMN_NAME by default
+
+        - inlines [list]
+            Inline models related
     """
     # translatable fields
     fields = None
+    inlines = None
 
     # language
     default_language = 'active'
@@ -59,6 +66,6 @@ class ModelTranslation(object):
         self.model = model
         # Default db_table
         if self.db_table is None:
-            self.db_table = '_'.join([ model._meta.db_table,
-                                       TRANSLATION_TABLE_SUFFIX ])
+            self.db_table = '_'.join([model._meta.db_table,
+                                       TRANSLATION_TABLE_SUFFIX])
         super(ModelTranslation, self).__init__()

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-import new
 import copy
+import new
 
 from django.conf import settings
-from django.db import models
 from django.core.exceptions import ImproperlyConfigured
+from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
-
 from model_i18n import managers
-from model_i18n.options import ModelTranslation
-from model_i18n.exceptions import AlreadyRegistered
-from model_i18n.conf import CURRENT_LANGUAGES, CURRENT_LANGUAGE, \
-                            ATTR_BACKUP_SUFFIX
 from model_i18n.admin import setup_admin
-
+from model_i18n.conf import CURRENT_LANGUAGES, CURRENT_LANGUAGE, \
+     ATTR_BACKUP_SUFFIX
+from model_i18n.exceptions import AlreadyRegistered
+from model_i18n.managers import TransManager
+from model_i18n.options import ModelTranslation
+from model_i18n.utils import import_module
 
 __all__ = ['register', 'ModelTranslation']
 
@@ -21,62 +21,77 @@ __all__ = ['register', 'ModelTranslation']
 class Translator(object):
     """
     Manages all the site's multilingual models.
-
-    Every multilingual model must be registered to a global (single) instance
-    of this class, so it can be properly set up (see `register` method bellow).
-    This class should never be instantiated, use this module's API functions.
     """
-    def __init__(self):
-        self._registry = {} # model_class class -> translation_class instance
 
+    def __init__(self):
+        self._registry = {}  # model_class class -> translation_class instance
 
     def register(self, master_model, translation_class=None, **options):
-        """
-        Sets everything up for the given master model using a set of
-        registration options (ModelTranslation attributes).
-
-        If a translation class isn't given, it will use ModelTranslation (the
-        default translation options). If keyword arguments are given -- e.g.,
-        fields -- they'll overwrite the translation_class attributes.
-        """
+        if type(master_model) is str:
+            app_path = ".".join(master_model.split(".")[:-1])
+            master_module_models = import_module(app_path + '.models')
+            master_model = getattr(master_module_models, master_model.split(".")[-1])
+            #print master_model
+            #return
         if master_model in self._registry:
-            raise AlreadyRegistered('The model "%s" has is already registered for translation' % master_model.__name__)
+            raise AlreadyRegistered('The model "%s" has is already \
+            registered for translation' % master_model.__name__)
 
         # If not translation_class given use default options.
         if not translation_class:
             translation_class = ModelTranslation
-        # If we got **options then dynamically construct a subclass of translation_class with those **options.
+
+        # If we got **options then dynamically construct a
+        # subclass of translation_class with those **options.
         if options:
-            translation_class = type('%sTranslation' % master_model.__name__, (translation_class,), options)
+            translation_class = type('%sTranslation' % \
+            master_model.__name__, (translation_class,), options)
 
         # Validate the translation_class (just in debug mode).
         if settings.DEBUG:
             from model_i18n.validation import validate
             validate(translation_class, master_model)
 
+        master_model.add_to_class('_default_manager', TransManager())
+
         opts = translation_class(master_model)
 
-        # Set up master_model as a multilingual model using translation_class options
-        translation_model = self.create_translation_model(master_model, opts)
-        master_model.add_to_class("translations", models.ManyToManyField(translation_model, blank=True, null=True, editable=False))
-        self.setup_master_model(master_model, translation_model) # This probably will become a class method soon.
-        setup_admin(master_model, translation_model) # Setup django-admin support
+        # Set up master_model as a multilingual model
+        # using translation_class options
+        tmodel = self.create_translation_model(master_model, opts)
+        defaults = {'blank': True, 'null': True, 'editable': False}
+        m2mfield = models.ManyToManyField(tmodel, **defaults)
+        master_model.add_to_class("translations", m2mfield)
+
+        # This probably will become a class method soon.
+        self.setup_master_model(master_model, tmodel)
+        setup_admin(master_model, tmodel)  # Setup django-admin support
 
         # Register the multilingual model and the used translation_class.
         self._registry[master_model] = opts
 
-
     def create_translation_model(self, master_model, opts):
-        """
-        Creates a model for storing `master_model`'s translations based on
-        given registration options class.
-        """
         attrs = {'__module__': master_model.__module__}
+
+        # creates unique_together for master_model
+        trans_unique_together = []
+        base_unique_together = \
+            (opts.master_field_name, opts.language_field_name)
+        trans_unique_together.append(base_unique_together)
+        if master_model._meta.unique_together:
+            for rule in master_model._meta.unique_together:
+                trans_rule_fields = []
+                for trans_rule_field in rule:
+                    if trans_rule_field in opts.fields:
+                        trans_rule_fields.append(trans_rule_field)
+                nut = tuple(trans_rule_fields) + base_unique_together
+                trans_unique_together.append(nut)
 
         class Meta:
             app_label = master_model._meta.app_label
             db_table = opts.db_table
-            unique_together = (opts.master_field_name, opts.language_field_name)
+            master_model._meta.unique_together
+            unique_together = tuple(set(trans_unique_together))
         attrs['Meta'] = Meta
 
         class TranslationMeta:
@@ -86,17 +101,22 @@ class Translator(object):
             language_field_name = opts.language_field_name
             master_field_name = opts.master_field_name
             related_name = opts.related_name
+            inlines = opts.inlines
         attrs['_transmeta'] = TranslationMeta
         opts.related_name = "parents"
+
         # Common translation model fields
         common_fields = {
+
             # Translation language
             opts.language_field_name: models.CharField(db_index=True,
                 verbose_name=_('language'), max_length=10,
                 choices=settings.LANGUAGES),
+
             # Master instance FK
-            opts.master_field_name: models.ForeignKey(master_model, db_index=True,
-                verbose_name=_('master'), related_name=opts.related_name),
+            opts.master_field_name: models.ForeignKey(master_model, \
+                db_index=True, verbose_name=_('master'), \
+                related_name=opts.related_name),
         }
         attrs.update(common_fields)
 
@@ -106,16 +126,16 @@ class Translator(object):
             if field.name not in opts.fields:
                 continue
             if field.name in common_fields:
-                raise ImproperlyConfigured, ('%s: %s field name "%s" conflicts '
-                    'with the language or master FK common fields, try '
-                    'changing language_field_name or master_field_name '
-                    'ModelTranslation option.'
+                raise ImproperlyConfigured('%s: %s field name "%s" \
+                    conflicts with the language or master FK common \
+                    fields, try changing language_field_name or \
+                    master_field_name ModelTranslation option.'
                     % (model_name, master_model.__name__, field.attname))
             newfield = copy.copy(field)
             newfield.primary_key = False
-            newfield._unique = False # FIXME (unique_together)
 
             attrs[newfield.name] = newfield
+
         # setup i18n languages on master model for easier access
         master_model.i18n_languages = settings.LANGUAGES
         master_model.i18n_default_language = opts.master_language
@@ -123,87 +143,35 @@ class Translator(object):
         return type(model_name, (models.Model,), attrs)
 
     def setup_master_model(self, master_model, translation_model):
-        """
-        Sets up master model and its managers for working with translations:
-
-        Master model:
-            * master_model._translation_model: Translation model
-            * master_model.switch_language: language switcher
-
-        Managers:
-            * See setup_manager
-        """
-        # Master model
         master_model._translation_model = translation_model
         master_model.switch_language = switch_language
         master_model.save = trans_save(master_model.save)
         master_model.lang = lang
-        # Managers
-        # FIXME: We probably should we add a translation option to ignore some
-        # manager (so users can create non multilingual managers)
-        # XXX: Not sure what to do with _meta.abtract_managers
-        for c, fname, manager in master_model._meta.concrete_managers:
-            self.setup_manager(manager)
-
-
 
     def setup_manager(self, manager):
-        """
-        Patch for master model's managers.
-            * model.objects.set_language: Sets the current language.
-            * model.objects.get_query_set: All querysets are TransQuerySet types
-        """
         # Backup get_query_set to use in translation get_query_set
         manager.get_query_set_orig = manager.get_query_set
+
+        # Add translation methods into a manager instance
         for method_name in ('get_query_set', 'set_language'):
-            # Add translation method into the manager instance
-            setattr(manager, method_name,
-                new.instancemethod(getattr(managers, method_name), manager, manager.__class__))
+            im = new.instancemethod(getattr(managers, method_name))
+            setattr(manager, method_name, im, manager, manager.__class__)
 
-from django.db import transaction
-@transaction.commit_on_success
-def i18n_save(instance, language, values={}):
-    from model_i18n.utils import get_translation_opt
-    from django.forms.models import modelform_factory
-    """Change view for i18n values for current instance. This is a
-    simplified django-admin change view which displays i18n fields
-    for current model/id."""
-    obj = instance
-    if language not in dict(settings.LANGUAGES):
-        raise ValueError(_('Incorrect language %(lang)s') % {'lang': language})
-
-    master_language = get_translation_opt(obj, 'master_language')
-    if language == master_language:
-        return instance.save()
-
-    fields = get_translation_opt(obj, 'translatable_fields')
-    lang_field = get_translation_opt(obj, 'language_field_name')
-    master_field = get_translation_opt(obj, 'master_field_name')
-
-    try:
-        trans = obj.translations.get(**{lang_field: language})
-    except obj._translation_model.DoesNotExist: # new translation
-        trans = obj._translation_model(**{lang_field: language,
-                                          master_field: obj})
-
-    ModelForm = modelform_factory(obj._translation_model, fields=fields)
-    initial = dict([(n,getattr(obj, n)) for n in fields])
-    values.update(initial)
-    form = ModelForm(instance=trans, data=values)
-    if form.is_valid():
-        return form.save()
-    return obj
 
 def trans_save(method):
-    def wrapper(self,*args,**kwargs):
+
+    def wrapper(self, *args, **kwargs):
         obj = self
         if hasattr(self, 'current_language'):
-            if self.current_language and self.current_language!=self.i18n_default_language:
+            if self.current_language \
+            and self.current_language != self.i18n_default_language:
                 obj = i18n_save(obj, self.current_language)
         else:
-            obj = method(self,*args,**kwargs)
+            obj = method(self, *args, **kwargs)
         return obj
+
     return wrapper
+
 
 def lang(instance, lang=None):
     if not instance:
@@ -225,28 +193,27 @@ def switch_language(instance, lang=None):
     """
     current_languages = getattr(instance, CURRENT_LANGUAGES, None)
     current = getattr(instance, CURRENT_LANGUAGE, None)
-
-    if current_languages: # any translation?
+    if current_languages:  # any translation?
         trans_meta = instance._translation_model._transmeta
         fields = trans_meta.translatable_fields
-        if not lang or lang == trans_meta.master_language: # use defaults
+        if not lang or lang == trans_meta.master_language:  # use defaults
             for name in fields:
                 value = getattr(instance, '_'.join((name, ATTR_BACKUP_SUFFIX)),
                                 None)
                 setattr(instance, name, value)
-        elif lang in current_languages and lang != current: # swtich language
+        elif lang in current_languages and lang != current:  # swtich language
             for name in fields:
                 value = getattr(instance, '_'.join((name, lang)), None)
-                if value is not None: # Ignore None, means not translated
+                #setattr(instance, name, value or '')
+                if value is not None:  # Ignore None, means not translated
                     setattr(instance, name, value)
         setattr(instance, CURRENT_LANGUAGE, lang)
-
 
 # Just one Translator instance is needed.
 _translator = Translator()
 
-## API
 
+## API
 def register(model, translation_class=None, **options):
     """ Register and set up `model` as a multilingual model. """
     return _translator.register(model, translation_class, **options)

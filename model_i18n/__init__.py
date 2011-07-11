@@ -9,7 +9,7 @@ from model_i18n import patches
 from model_i18n.utils import import_module
 
 
-VERSION = (0, 1, 0, 'alpha', 0)
+VERSION = (0, 2, 1, 'alpha', 0)
 _active = local()
 
 
@@ -31,11 +31,14 @@ def get_do_autotrans():
 
 
 def set_do_autotrans(v):
-   _active.value = v
+    _active.value = v
 
 
 def _load_conf(*args, **kwargs):
-    """  Ensures the configuration module gets imported when importing model_i18n. """
+    """
+    Ensures the configuration module gets
+    imported when importing model_i18n.
+    """
     # This is an idea from haystack app. We need to run the code that
     # follows only once, no matter how many times the main module is imported.
     # We'll look through the stack to see if we appear anywhere and simply
@@ -46,11 +49,15 @@ def _load_conf(*args, **kwargs):
             return
 
     if not hasattr(settings, 'MODEL_I18N_CONF'):
-        raise ImproperlyConfigured('You must define the MODEL_I18N_CONF setting, it should be a python module path string, for example "myproject.i18n_conf"')
+        raise ImproperlyConfigured('You must define the MODEL_I18N_CONF \
+        setting, it should be a python module path string, \
+        for example "myproject.i18n_conf"')
     if not hasattr(settings, 'MODEL_I18N_MASTER_LANGUAGE'):
-        raise ImproperlyConfigured('You must define the MODEL_I18N_MASTER_LANGUAGE setting.')
+        raise ImproperlyConfigured('You must define the \
+        MODEL_I18N_MASTER_LANGUAGE setting.')
 
     # Import config module
     import_module(settings.MODEL_I18N_CONF)
+
 
 _load_conf()

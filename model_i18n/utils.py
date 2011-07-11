@@ -3,7 +3,8 @@ from django.conf import settings
 
 
 def get_default_language():
-    """ Gets default project language from settings.TRANSLATIONS_DEFAULT_LANGUAGE
+    """ Gets default project language from
+    settings.TRANSLATIONS_DEFAULT_LANGUAGE
     if defined, or uses LANGUAGE_CODE
     """
     return getattr(settings, 'TRANSLATIONS_DEFAULT_LANGUAGE', None) or \
