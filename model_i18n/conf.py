@@ -42,6 +42,8 @@ CHANGE_TRANSLATION_TPL = 'i18n/admin/change_translation_form.html'
 # }
 TRANSLATED_APP_MODELS = getattr(settings, 'TRANSLATED_APP_MODELS', {})
 
+MODEL_I18N_DJANGO_ADMIN = getattr(settings, 'MODEL_I18N_DJANGO_ADMIN', True)
+
 # Do we have multidb support? (post r11952)
 try:
     from django.db import DEFAULT_DB_ALIAS

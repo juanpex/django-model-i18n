@@ -6,7 +6,7 @@ from django.contrib.admin import helpers
 from django.contrib.admin.util import unquote
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.forms.models import modelform_factory
+from django.forms.models import modelform_factory, BaseInlineFormSet
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -130,7 +130,8 @@ class TranslationModelAdmin(admin.ModelAdmin):
             defaults = {
                 'can_delete': False,
                 'extra': 0,
-                'form': self.get_inline_form(inline)
+                'form': self.get_inline_form(inline),
+                'formset': self.get_inline_formset(inline)
             }
             yield inline.get_formset(request, obj, **defaults)
 
@@ -144,8 +145,41 @@ class TranslationModelAdmin(admin.ModelAdmin):
             return self.get_i18n_form(request, obj, **kw)
         return super(TranslationModelAdmin, self).get_form(request, obj, **kw)
 
+    def get_inline_formset(self, inline):
+
+        class TransInlineFormSet(BaseInlineFormSet):
+
+            def __init__(self, *args, **kwargs):
+                super(TransInlineFormSet, self).__init__(*args, **kwargs)
+
+            def get_queryset(self):
+                qs = super(TransInlineFormSet, self).get_queryset()
+                qs._default_if_None = ''
+                return qs
+
+        TransInlineFormSet.lang = self.lang
+
+        return TransInlineFormSet
+
+
     def get_inline_form(self, inline):
+
         class TransInlineForm(inline.form):
+
+            def __init__(self, *args, **kwargs):
+                super(TransInlineForm, self).__init__(*args, **kwargs)
+                for fn in self.fields:
+                    if fn not in self.i18n_fields:
+                        self.fields[fn].widget.attrs['READONLY'] = 'READONLY'
+                        choices = getattr(self.fields[fn].widget, 'choices', None)
+                        if choices and 'instance' in kwargs:
+                            val = getattr(kwargs['instance'], fn, '')
+                            choices = [(k, v) for k,v in dict(choices).items() if k == val]
+                            self.fields[fn].widget.choices = choices
+                        else:
+                            self.fields[fn].widget.attrs['DISABLED'] = 'DISABLED'
+
+
 
             def save(self, *args, **kwargs):
                 kwargs['commit'] = False
@@ -170,6 +204,8 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 return aux
 
         TransInlineForm.lang = self.lang
+        TransInlineForm.i18n_fields = get_translation_opt(inline.model, 'translatable_fields')
+
         return TransInlineForm
 
     @csrf_protect_m

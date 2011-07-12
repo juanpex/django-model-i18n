@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_i18n import managers
 from model_i18n.admin import setup_admin
 from model_i18n.conf import CURRENT_LANGUAGES, CURRENT_LANGUAGE, \
-     ATTR_BACKUP_SUFFIX
+     ATTR_BACKUP_SUFFIX, MODEL_I18N_DJANGO_ADMIN
 from model_i18n.exceptions import AlreadyRegistered
 from model_i18n.managers import TransManager
 from model_i18n.options import ModelTranslation
@@ -31,7 +31,8 @@ class Translator(object):
             app_path = ".".join(master_model.split(".")[:-1])
             master_module_models = import_module(app_path + '.models')
             master_model = getattr(master_module_models, master_model.split(".")[-1])
-        
+            #print master_model
+            #return
         if master_model in self._registry:
             raise AlreadyRegistered('The model "%s" has is already \
             registered for translation' % master_model.__name__)
@@ -64,7 +65,8 @@ class Translator(object):
 
         # This probably will become a class method soon.
         self.setup_master_model(master_model, tmodel)
-        setup_admin(master_model, tmodel)  # Setup django-admin support
+        if MODEL_I18N_DJANGO_ADMIN:
+            setup_admin(master_model, tmodel)  # Setup django-admin support
 
         # Register the multilingual model and the used translation_class.
         self._registry[master_model] = opts
@@ -77,6 +79,7 @@ class Translator(object):
             msg = '\nCode language "%s" not exist: Avaible languages are: %s.\n The model %s take master languages "%s"' % \
             (opts.master_language , " ".join(dict(settings.LANGUAGES).keys()), master_model.__name__, settings.MODEL_I18N_MASTER_LANGUAGE)
             print OptionWarning(msg)
+
 
         # creates unique_together for master_model
         trans_unique_together = []
@@ -187,7 +190,7 @@ def lang(instance, lang=None):
     return instance
 
 
-def switch_language(instance, lang=None):
+def switch_language(instance, lang=None, default_if_None=None):
     """Here we overrides the default fields with their translated
     values. We keep the default if there's no value in the translated
     field or more than one language was requested.
@@ -208,8 +211,8 @@ def switch_language(instance, lang=None):
                 setattr(instance, name, value)
         elif lang in current_languages and lang != current:  # swtich language
             for name in fields:
-                value = getattr(instance, '_'.join((name, lang)), None)
-                #setattr(instance, name, value or '')
+                value = getattr(instance, '_'.join((name, lang)), default_if_None)
+                value = value or default_if_None
                 if value is not None:  # Ignore None, means not translated
                     setattr(instance, name, value)
         setattr(instance, CURRENT_LANGUAGE, lang)

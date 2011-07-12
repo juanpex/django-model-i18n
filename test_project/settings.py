@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from os.path import abspath, dirname, join
+import django
 import sys
 
 LANGUAGES = (
@@ -15,8 +16,10 @@ MODEL_I18N_CONF = 'test_project.i18n_conf'
 MODEL_I18N_MASTER_LANGUAGE = LANGUAGE_CODE
 
 PROJECT_DIR = dirname(abspath(__file__))
-sys.path.append(join(PROJECT_DIR, 'apps'))
+sys.path.append(PROJECT_DIR)
 sys.path.append(join(PROJECT_DIR, '..'))
+
+SOUTH_TESTS_MIGRATE = False
 
 TEMPLATE_DIRS = (
     join(PROJECT_DIR, "templates"),
@@ -28,7 +31,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.admin',
     'model_i18n',
-    'app',
+    'test_project.app',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -72,6 +75,17 @@ TEMPLATE_DEBUG = DEBUG
 USE_I18N = True
 
 CACHE_BACKEND = 'locmem:///'
+
+PYTHON_VERSION = '%s.%s' % sys.version_info[:2]
+DJANGO_VERSION = django.get_version()
+
+JUNIT_OUTPUT_DIR = join(
+    PROJECT_DIR,
+    '..',
+    'junit-dj%s-py%s' % (DJANGO_VERSION, PYTHON_VERSION)
+)
+
+TEST_RUNNER = 'test_project.testrunner.TestSuiteRunner'
 
 
 try:

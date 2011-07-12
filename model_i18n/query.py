@@ -181,7 +181,8 @@ class TransQuerySet(QuerySet):
                                          CURRENT_LANGUAGES, '').split('_'))
         implicit = self.lang
         if implicit and implicit in languages:
-            instance.switch_language(implicit)  # switch to implicit language
+            default_if_None = getattr(self, '_default_if_None', None)
+            instance.switch_language(implicit, default_if_None)  # switch to implicit language
         setattr(instance, CURRENT_LANGUAGES, languages)
         return instance
 
