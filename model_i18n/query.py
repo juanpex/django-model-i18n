@@ -34,17 +34,20 @@ class QOuterJoins(Q):
             if not hasattr(query, 'custom_joins'):
                 query.custom_joins = []
             jtype = self.JOIN_TYPE
-            query.custom_joins += [
-                " %s %s AS %s ON %s" % (jtype, table, alias, where)
-                    for alias, (table, where) in self.joins.iteritems()
-                        if alias not in used_aliases]
+            for alias, (table, where) in self.joins.iteritems():
+                if alias not in used_aliases:
+                    aux = list(query.custom_joins)
+                    aux += [" %s %s AS %s ON %s" % (jtype, table, alias, where)]
+                    query.custom_joins = list(set(aux))
+                    used_aliases = set(list(used_aliases) + list([alias]))
 
-    def __and__(self, right):
-        """ AND operator. Useful to setup several joins rules """
-        if not isinstance(right, QOuterJoins):
-            return super(QOuterJoins, self).__and__(right)
-        self.joins.update(right.joins)
-        return self
+    # def __and__(self, right):
+    #     """ AND operator. Useful to setup several joins rules """
+    #     if not isinstance(right, QOuterJoins):
+    #         return super(QOuterJoins, self).__and__(right)
+    #     self.joins.update(right.joins)
+    #     return self
+
 
 
 class TransJoin(QOuterJoins):
@@ -62,7 +65,7 @@ class TransJoin(QOuterJoins):
         trans_model = model._translation_model
         trans_opts = trans_model._transmeta
 
-        alias = 'translation_%s' % lang[:2]
+        alias = '%s_translation_%s' % (trans_model.__name__.lower(), lang[:2])
         self.data = {alias: lang[:2]}
 
         # Join data
@@ -84,6 +87,7 @@ class TransJoin(QOuterJoins):
 
         super(TransJoin, self).__init__(**{alias: (trans_table, where)})
 
+    
     def add_to_query(self, query, used_aliases):
         """
         Delegates join to QOuterJoins and adds the needed fields to
@@ -93,20 +97,25 @@ class TransJoin(QOuterJoins):
         language codes joined by '_'.
         """
         # resolve joins
-        super(TransJoin, self).add_to_query(query, used_aliases)
         trans_pk = QN(self.model._translation_model._meta.pk.column)
         fields = self.model._translation_model._transmeta.translatable_fields
 
         # add joined columns needed
         select = {}
         for alias, lang in self.data.iteritems():
-            alias = QN(alias)
-            select['id_%s' % lang] = '%s.%s' % (alias, trans_pk)
-            select.update(('%s_%s' % (name, lang),
-                           '%s.%s' % (alias, QN(name)))
-                                for name in fields)
-        select[CURRENT_LANGUAGES] = '\'%s\'' % '_'.join(self.data.itervalues())
-        query.add_extra(select, None, None, None, None, None)
+            if alias not in used_aliases:
+                alias = QN(alias)
+                select['id_%s' % lang] = '%s.%s' % (alias, trans_pk)
+                select.update(('%s_%s' % (name, lang),
+                               '%s.%s' % (alias, QN(name)))
+                                    for name in fields)
+                select[CURRENT_LANGUAGES] = '\'%s\'' % '_'.join(self.data.itervalues())
+                query.add_extra(select, None, None, None, None, None)
+
+        #aux = list(query.custom_joins)
+        #query.custom_joins = list(set(aux))
+        super(TransJoin, self).add_to_query(query, used_aliases)
+        
 
     def __and__(self, right):
         """ AND operator, useful to request more than one language
@@ -140,6 +149,7 @@ class TransQuerySet(QuerySet):
         languages.append(language)
         self.languages = set(languages)
         self.lang = language
+        
         return self.filter(TransJoin(self.model, self.lang))
 
     def filter(self, *args, **kwargs):
@@ -159,12 +169,15 @@ class TransQuerySet(QuerySet):
                 return super(TransQuerySet, self).filter(qu)
         return super(TransQuerySet, self).filter(*args, **kwargs)
 
+
     def iterator(self):
         """ Invokes QuerySet iterator method and tries to change instance
         attributes with translated values if any translation was retrieved
         """
+        self.query.select_related = True
         for obj in super(TransQuerySet, self).iterator():
             yield self.change_fields(obj)
+
 
     def change_fields(self, instance):
         """Here we backups master values in <name>_<ATTR_BACKUP_SUFFIX>

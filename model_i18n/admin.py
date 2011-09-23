@@ -17,7 +17,6 @@ def setup_admin(master_model, translation_model):
     if not madmin:
         return
 
-    maclass = madmin.__class__
     if madmin.change_form_template:
         # default change view is populated with links to i18n edition
         # sections but won't be available if change_form_template is
@@ -29,10 +28,15 @@ def setup_admin(master_model, translation_model):
 
     from model_i18n.admin_helpers import TranslationModelAdmin
 
-    TranslationModelAdmin = copy_base_fields(maclass, TranslationModelAdmin)
+    maclass = madmin.__class__
+
+    options = get_options_base_fields(maclass)
+
+    admintranslation_class = type('%sTranslationAdmin' % \
+            master_model.__name__, (TranslationModelAdmin,), options)
 
     admin.site.unregister(master_model)
-    admin.site.register(master_model, TranslationModelAdmin)
+    admin.site.register(master_model, admintranslation_class)
     madmin = admin.site._registry.get(master_model)
     maclass = madmin.__class__
 
@@ -52,36 +56,41 @@ def setup_admin(master_model, translation_model):
         inline_instance = iclass(master_model._translation_model, admin.site)
         maclass.i18n_inline_instances.append(inline_instance)
 
+    admin.site.unregister(master_model)
+    admin.site.register(master_model, madmin)
+    
 
-def copy_base_fields(base, admin):
+
+def get_options_base_fields(base):
     attr_names = (
     'list_display',
-    'list_display_links',
+    # 'list_display_links',
     'list_filter',
-    'list_select_related',
-    'list_per_page',
-    'list_editable',
+    # 'list_select_related',
+    # 'list_per_page',
+    # 'list_editable',
     'search_fields',
-    'date_hierarchy',
-    'save_as',
-    'save_on_top',
+    # 'date_hierarchy',
+    # 'save_as',
+    # 'save_on_top',
     'ordering',
     'inlines',
-    'add_form_template',
-    'change_list_template',
-    'delete_confirmation_template',
-    'delete_selected_confirmation_template',
-    'object_history_template',
-    'actions',
-    'action_form',
-    'actions_on_top',
-    'actions_on_bottom',
-    'actions_selection_counter',
-    'fieldsets'
+    # 'add_form_template',
+    # 'change_list_template',
+    # 'delete_confirmation_template',
+    # 'delete_selected_confirmation_template',
+    # 'object_history_template',
+    # 'actions',
+    # 'action_form',
+    # 'actions_on_top',
+    # 'actions_on_bottom',
+    # 'actions_selection_counter',
+    # 'fieldsets'
     )
+    options = {}
     for attr in attr_names:
-        setattr(admin, attr, getattr(base, attr))
-    return admin
+        options[attr] = getattr(base, attr)
+    return options
 
 
 def get_urls(instance):

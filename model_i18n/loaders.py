@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from os.path import dirname
 
-from model_i18n.utils import import_module
-
 
 def autodiscover(module_name='translations'):
     """
@@ -13,10 +11,8 @@ def autodiscover(module_name='translations'):
     Based on django's contrib.admin autodiscover().
     """
     import imp
+    from model_i18n.utils import import_module
     from django.conf import settings
-    from django.contrib import admin
-
-    admin.autodiscover()
 
     for app in settings.INSTALLED_APPS:
         # For each app, we need to look for `module_name` in that app's
@@ -61,3 +57,11 @@ def autodiscover(module_name='translations'):
                 raise ImproperlyConfigured("Model %s does not exist on %s" % \
                     (model_name, app_path))
             translator.register(django_model, **model_conf[model_name])
+
+
+def autodiscover_admin():
+
+    from model_i18n.translator import _translator
+    from model_i18n.admin import setup_admin
+    for m, t in _translator._registry_admin.items():
+        setup_admin(m, t)

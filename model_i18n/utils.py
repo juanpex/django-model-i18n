@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.conf import settings
 
 
 def get_default_language():
@@ -7,6 +6,7 @@ def get_default_language():
     settings.TRANSLATIONS_DEFAULT_LANGUAGE
     if defined, or uses LANGUAGE_CODE
     """
+    from django.conf import settings
     return getattr(settings, 'TRANSLATIONS_DEFAULT_LANGUAGE', None) or \
            getattr(settings, 'LANGUAGE_CODE', None)
 

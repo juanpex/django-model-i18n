@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
-
+from django.db import models
 
 # Translation model's common field default names.
 # If you want to get a field name for a specific translation model remember it
@@ -43,6 +43,12 @@ CHANGE_TRANSLATION_TPL = 'i18n/admin/change_translation_form.html'
 TRANSLATED_APP_MODELS = getattr(settings, 'TRANSLATED_APP_MODELS', {})
 
 MODEL_I18N_DJANGO_ADMIN = getattr(settings, 'MODEL_I18N_DJANGO_ADMIN', True)
+
+MODEL_I18N_DJANGO_ADMIN = getattr(settings, 'MODEL_I18N_DJANGO_ADMIN', True)
+
+DEFAULT_TRANS_MANAGER = getattr(settings, 'DEFAULT_TRANS_MANAGER', models.Manager)
+
+
 
 # Do we have multidb support? (post r11952)
 try:

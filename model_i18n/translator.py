@@ -25,14 +25,13 @@ class Translator(object):
 
     def __init__(self):
         self._registry = {}  # model_class class -> translation_class instance
+        self._registry_admin = {}
 
     def register(self, master_model, translation_class=None, **options):
         if type(master_model) is str:
             app_path = ".".join(master_model.split(".")[:-1])
             master_module_models = import_module(app_path + '.models')
             master_model = getattr(master_module_models, master_model.split(".")[-1])
-            #print master_model
-            #return
         if master_model in self._registry:
             raise AlreadyRegistered('The model "%s" has is already \
             registered for translation' % master_model.__name__)
@@ -53,6 +52,8 @@ class Translator(object):
             validate(translation_class, master_model)
 
         master_model.add_to_class('_default_manager', TransManager())
+        master_model.add_to_class('_base_manager', TransManager())
+        master_model.add_to_class('objects', TransManager())
 
         opts = translation_class(master_model)
 
@@ -66,7 +67,7 @@ class Translator(object):
         # This probably will become a class method soon.
         self.setup_master_model(master_model, tmodel)
         if MODEL_I18N_DJANGO_ADMIN:
-            setup_admin(master_model, tmodel)  # Setup django-admin support
+            self._registry_admin[master_model] = tmodel
 
         # Register the multilingual model and the used translation_class.
         self._registry[master_model] = opts
