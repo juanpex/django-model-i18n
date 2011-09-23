@@ -1,4 +1,3 @@
-
 =================
 django-model-i18n 
 =================
@@ -100,9 +99,9 @@ Example 1::
 
 Example 2::
 
-	items = Item.objects.filter(Q(translations___language='es') | Q(translations___language='es'))
-	items = items.exclude(category__name='gfys')
-	items = items.filter(Q(title__icontains='foo') | Q(translations__title__icontains='foo'))
+	items = Item.objects.filter(Q(translations___language='en') | Q(translations___language='es'))
+	items = items.exclude(category__name='stuff')
+	items = items.filter(Q(title__icontains='book') | Q(translations__title__icontains='toy'))
 
 
 
