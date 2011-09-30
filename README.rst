@@ -19,6 +19,12 @@ Installation
 Configuration
 =============
 
+Go to urls.py into root project directory and put this
+
+	from model_i18n import loaders
+
+	loaders.autodiscover_admin()
+
 Create file i18n_conf.py into root project directory and put this
 
 	from model_i18n import loaders
