@@ -31,9 +31,9 @@ class TransManager(class_default_managers):
             kwargs['using'] = qs._db
         queryset = TransQuerySet(self.model, **kwargs)
         if get_do_autotrans():
-            queryset = queryset.set_language(get_language()[:2])
+            queryset = queryset.set_language(get_language().replace("-",""))
         return queryset
 
     def set_language(self, language_code):
         """ Sets the current language """
-        return self.get_query_set().set_language(language_code[:2])
+        return self.get_query_set().set_language(language_code.replace("-",""))

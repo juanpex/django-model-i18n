@@ -41,7 +41,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super(TranslationModelAdmin, self).get_urls()
         return urls[:-1] + patterns('',
-            url(r'^(?P<object_id>\d+)/(?P<language>[a-z]{2})/$',
+            url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2})/$',
+                self.i18n_change_view),
+            url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2}-[a-z]{2})/$',
                 self.i18n_change_view),
             urls[-1])
 
@@ -79,11 +81,12 @@ class TranslationModelAdmin(admin.ModelAdmin):
         returned if no match is found (or the object_id failed validation
         against the primary key field).
         """
+        #import pdb; pdb.set_trace()
         queryset = self.i18n_queryset(request)
         model = queryset.model
-        args = {'_language': language, '_master': master}
+        args = {'_language': language.replace("-",""), '_master': master}
         try:
-            object_id = model._meta.pk.to_python(object_id)
+            #object_id = model._meta.pk.to_python(object_id)
             return queryset.get(**args)
         except (model.DoesNotExist, ValidationError):
             return self.Tmodel(**args)
@@ -111,7 +114,8 @@ class TranslationModelAdmin(admin.ModelAdmin):
             "formfield_callback": formfield_callback,
         }
         defaults.update(kwargs)
-        return modelform_factory(self.Tmodel, **defaults)
+        f = modelform_factory(self.Tmodel, **defaults)
+        return f
 
     def get_formsets(self, request, obj=None):
         if self.lang:
@@ -187,7 +191,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 Tmodel = obj.__class__._translation_model
                 defaults = {
                     '_master': self.instance,
-                    '_language': self.lang
+                    '_language': self.lang.replace("-", "")
                 }
                 try:
                     aux = Tmodel.objects.get(**defaults)
@@ -218,6 +222,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
         model = self.model
         opts = model._meta
         self.lang = language
+
 
         obj = self.get_object(request, unquote(object_id))
 
@@ -307,9 +312,14 @@ class TranslationModelAdmin(admin.ModelAdmin):
             inline_admin_formsets.append(inline_admin_formset)
             media = media + inline_admin_formset.media
 
+        translated_fields = []
+        for f in obj._translation_model._transmeta.translatable_fields:
+            translated_fields.append( (f, getattr(obj, f))  )
+
         context = {
             'title':  _('Translation %s') % force_unicode(opts.verbose_name),
             'adminform': adminForm, 'original': obj,
+            'translated_fields': translated_fields, 'master_language': master_language,
             'is_popup': ('_popup' in request.REQUEST),
             'errors': admin.helpers.AdminErrorList(form, []),
             'root_path': self.admin_site.root_path,

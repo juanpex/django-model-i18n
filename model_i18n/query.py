@@ -65,8 +65,8 @@ class TransJoin(QOuterJoins):
         trans_model = model._translation_model
         trans_opts = trans_model._transmeta
 
-        alias = '%s_translation_%s' % (trans_model.__name__.lower(), lang[:2])
-        self.data = {alias: lang[:2]}
+        alias = '%s_translation_%s' % (trans_model.__name__.lower(), lang.replace("-",""))
+        self.data = {alias: lang.replace("-","")}
 
         # Join data
         related_col = trans_opts.master_field_name
@@ -85,9 +85,9 @@ class TransJoin(QOuterJoins):
                     't_lang': QN(trans_opts.language_field_name),
                     'lang': lang}
 
-        super(TransJoin, self).__init__(**{alias: (trans_table, where)})
+        super(TransJoin, self).__init__(**{str(alias): (trans_table, where)})
 
-    
+
     def add_to_query(self, query, used_aliases):
         """
         Delegates join to QOuterJoins and adds the needed fields to
@@ -115,7 +115,7 @@ class TransJoin(QOuterJoins):
         #aux = list(query.custom_joins)
         #query.custom_joins = list(set(aux))
         super(TransJoin, self).add_to_query(query, used_aliases)
-        
+
 
     def __and__(self, right):
         """ AND operator, useful to request more than one language
@@ -149,7 +149,7 @@ class TransQuerySet(QuerySet):
         languages.append(language)
         self.languages = set(languages)
         self.lang = language
-        
+
         return self.filter(TransJoin(self.model, self.lang))
 
     def filter(self, *args, **kwargs):

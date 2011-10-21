@@ -46,7 +46,7 @@ MODEL_I18N_DJANGO_ADMIN = getattr(settings, 'MODEL_I18N_DJANGO_ADMIN', True)
 
 MODEL_I18N_DJANGO_ADMIN = getattr(settings, 'MODEL_I18N_DJANGO_ADMIN', True)
 
-DEFAULT_TRANS_MANAGER = getattr(settings, 'DEFAULT_TRANS_MANAGER', models.Manager)
+DEFAULT_TRANS_MANAGER = getattr(settings, 'DEFAULT_TRANS_MANAGER', None)
 
 
 

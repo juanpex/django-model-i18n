@@ -23,7 +23,7 @@ def setup_admin(master_model, translation_model):
         # overrided on model admin options, in such case, extend from
         # model_i18n/template/change_form.html
         msg = '"%s" overrides change_form_template, \
-        extend %s to get i18n support' % (maclass, CHANGE_TPL)
+        extend %s to get i18n support' % (madmin, CHANGE_TPL)
         warnings.warn(OptionWarning(msg))
 
     from model_i18n.admin_helpers import TranslationModelAdmin
@@ -58,35 +58,39 @@ def setup_admin(master_model, translation_model):
 
     admin.site.unregister(master_model)
     admin.site.register(master_model, madmin)
-    
+
 
 
 def get_options_base_fields(base):
-    attr_names = (
+    attr_names = [
     'list_display',
-    # 'list_display_links',
+    'list_display_links',
     'list_filter',
-    # 'list_select_related',
-    # 'list_per_page',
-    # 'list_editable',
+    'list_select_related',
+    'list_per_page',
+    'list_editable',
     'search_fields',
-    # 'date_hierarchy',
-    # 'save_as',
-    # 'save_on_top',
+    'date_hierarchy',
+    'save_as',
+    'save_on_top',
     'ordering',
     'inlines',
-    # 'add_form_template',
-    # 'change_list_template',
-    # 'delete_confirmation_template',
-    # 'delete_selected_confirmation_template',
-    # 'object_history_template',
-    # 'actions',
-    # 'action_form',
-    # 'actions_on_top',
-    # 'actions_on_bottom',
-    # 'actions_selection_counter',
-    # 'fieldsets'
-    )
+    'add_form_template',
+    'change_list_template',
+    'delete_confirmation_template',
+    'delete_selected_confirmation_template',
+    'object_history_template',
+    'actions',
+    'action_form',
+    'actions_on_top',
+    'actions_on_bottom',
+    'actions_selection_counter',
+    'fieldsets'
+    ]
+    for attr in dict(base.__dict__):
+         if not attr in attr_names and not attr in ('__module__', '__doc__', 'media', 'prepopulated_fields'):
+            attr_names.append(attr)
+
     options = {}
     for attr in attr_names:
         options[attr] = getattr(base, attr)
@@ -98,5 +102,7 @@ def get_urls(instance):
     urls = instance.get_urls_orig()
     return urls[:-1] + patterns('',
                 url(r'^(?P<obj_id>\d+)/(?P<language>[a-z]{2})/$',
+                    instance.i18n_change_view),
+                    url(r'^(?P<obj_id>\d+)/(?P<language>[a-z]{2}-[a-z]{2})/$',
                     instance.i18n_change_view),
                 urls[-1])

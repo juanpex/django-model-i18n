@@ -32,6 +32,8 @@ class Translator(object):
             app_path = ".".join(master_model.split(".")[:-1])
             master_module_models = import_module(app_path + '.models')
             master_model = getattr(master_module_models, master_model.split(".")[-1])
+            #print master_model
+            #return
         if master_model in self._registry:
             raise AlreadyRegistered('The model "%s" has is already \
             registered for translation' % master_model.__name__)
@@ -54,6 +56,7 @@ class Translator(object):
         master_model.add_to_class('_default_manager', TransManager())
         master_model.add_to_class('_base_manager', TransManager())
         master_model.add_to_class('objects', TransManager())
+        master_model.add_to_class('live_objects', TransManager())
 
         opts = translation_class(master_model)
 
