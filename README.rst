@@ -25,16 +25,6 @@ Go to urls.py into root project directory and put this
 
 	loaders.autodiscover_admin()
 
-Create file i18n_conf.py into root project directory and put this
-
-	from model_i18n import loaders
-
-	loaders.autodiscover()
-
-In module settings::
-
-    MODEL_I18N_CONF = 'project.i18n_conf'
-
 also add 'django.middleware.locale.LocaleMiddleware' into MIDDLEWARE_CLASSES::
 
     MIDDLEWARE_CLASSES = (
@@ -47,6 +37,15 @@ also add 'django.middleware.locale.LocaleMiddleware' into MIDDLEWARE_CLASSES::
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     ) 
+
+and finally put in INSTALLED_APPS::
+
+	INSTALLED_APPS = (
+	    'model_i18n',
+	    ...
+	    'django.contrib.admin',
+	    ...
+	)
 
 Usage
 =====
