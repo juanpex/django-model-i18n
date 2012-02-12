@@ -14,6 +14,7 @@ def autodiscover(module_name='translations'):
     from model_i18n.utils import import_module
     from django.conf import settings
 
+
     for app in settings.INSTALLED_APPS:
         # For each app, we need to look for `module_name` in that app's
         # package. We can't use os.path here -- recall that modules may be
@@ -59,9 +60,13 @@ def autodiscover(module_name='translations'):
             translator.register(django_model, **model_conf[model_name])
 
 
-def autodiscover_admin():
+def autodiscover_admin(adminsite=None):
+
+    if not adminsite:
+        from django.contrib.admin import site
+        adminsite = site
 
     from model_i18n.translator import _translator
     from model_i18n.admin import setup_admin
     for m, t in _translator._registry_admin.items():
-        setup_admin(m, t)
+        setup_admin(m, t, adminsite)

@@ -26,6 +26,83 @@ from model_i18n.utils import get_translation_opt
 csrf_protect_m = method_decorator(csrf_protect)
 
 
+
+from django import forms
+from django.utils.safestring import mark_safe
+
+class SpanWidget(forms.Widget):
+    '''Renders a value wrapped in a <span> tag.
+
+    Requires use of specific form support. (see ReadonlyForm
+    or ReadonlyModelForm)
+    '''
+
+    use_post = False
+
+    def render(self, name, value, attrs=None):
+        original_value = value
+        display_value = value
+        try:
+            original_value = self.original_value
+            display_value = self.display_value
+        except:
+            pass
+        final_attrs = self.build_attrs(attrs, name=name)
+        fl_attrs = forms.util.flatatt(final_attrs)
+        rep = u'<span%s >%s</span>' % (fl_attrs, display_value)
+        if self.use_post:
+            rep += u'<input type="hidden"%s value="%s" />' % (fl_attrs, original_value)
+        return mark_safe(rep)
+
+    def value_from_datadict(self, data, files, name):
+        return self.original_value
+
+
+class SpanPostWidget(SpanWidget):
+    use_post = True
+
+
+class SpanField(forms.Field):
+    '''A field which renders a value wrapped in a <span> tag.
+
+    Requires use of specific form support. (see ReadonlyForm
+    or ReadonlyModelForm)
+    '''
+
+    def __init__(self, *args, **kwargs):
+        kwargs['widget'] = kwargs.get('widget', SpanWidget)
+        super(SpanField, self).__init__(*args, **kwargs)
+
+class Readonly(object):
+    '''Base class for ReadonlyForm and ReadonlyModelForm which provides
+    the meat of the features described in the docstings for those classes.
+    '''
+
+    readonly_default_value = '---'
+
+    def __init__(self, *args, **kwargs):
+        super(Readonly, self).__init__(*args, **kwargs)
+        readonly = self.Meta.readonly
+        if not readonly:
+            return
+        for name, field in self.fields.items():
+            if name in readonly:
+                field.widget = SpanWidget(attrs=field.widget.attrs)
+            elif not isinstance(field, SpanField):
+                continue
+            display_value = self.readonly_default_value
+            if hasattr(self.instance, 'get_%s_display' % name):
+                display_value = getattr(self.instance, 'get_%s_display' % name)()
+            else:
+                try:
+                    display_value = getattr(self.instance, name)
+                except:
+                    pass
+            field.widget.original_value = display_value
+
+
+
+
 class TranslationModelAdmin(admin.ModelAdmin):
 
     lang = None
@@ -135,7 +212,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 'can_delete': False,
                 'extra': 0,
                 'form': self.get_inline_form(inline),
-                'formset': self.get_inline_formset(inline)
+                'formset': self.get_inline_formset(inline),
             }
             yield inline.get_formset(request, obj, **defaults)
 
@@ -174,14 +251,19 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 super(TransInlineForm, self).__init__(*args, **kwargs)
                 for fn in self.fields:
                     if fn not in self.i18n_fields:
-                        self.fields[fn].widget.attrs['READONLY'] = 'READONLY'
-                        choices = getattr(self.fields[fn].widget, 'choices', None)
-                        if choices and 'instance' in kwargs:
-                            val = getattr(kwargs['instance'], fn, '')
-                            choices = [(k, v) for k,v in dict(choices).items() if k == val]
-                            self.fields[fn].widget.choices = choices
-                        else:
-                            self.fields[fn].widget.attrs['DISABLED'] = 'DISABLED'
+                        self.fields[fn].widget = SpanPostWidget() #forms.HiddenInput()
+                        if self.instance.pk:
+                            val = getattr(self.instance, fn, '')
+                            self.fields[fn].widget.original_value = val.pk if hasattr(val, 'pk') else val
+                            self.fields[fn].widget.display_value = unicode(val)
+                        # self.fields[fn].widget.attrs['READONLY'] = 'READONLY'
+                        # choices = getattr(self.fields[fn].widget, 'choices', None)
+                        # if choices and 'instance' in kwargs:
+                        #     val = getattr(kwargs['instance'], fn, '')
+                        #     choices = [(k, v) for k,v in dict(choices).items() if k == val]
+                        #     self.fields[fn].widget.choices = choices
+                        # else:
+                        #     self.fields[fn].widget.attrs['DISABLED'] = 'DISABLED'
 
 
 
@@ -201,7 +283,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 fields = trans_meta.translatable_fields
                 for name in fields:
                     value = getattr(obj, name, None)
-                    if value:
+                    if not value is None:
                         setattr(aux, name, value)
                 aux.save()
                 self.instance.translations.add(aux)
@@ -314,10 +396,20 @@ class TranslationModelAdmin(admin.ModelAdmin):
 
         translated_fields = []
         for f in obj._translation_model._transmeta.translatable_fields:
-            translated_fields.append( (f, getattr(obj, f))  )
+            try:
+                v = getattr(obj, '_'.join((f, 'master')))
+            except:
+                v = getattr(obj, f,)
+            v = v or ''
+            if hasattr(v, 'replace'):
+                v = v.replace("'", "&#39;").replace('"', "&quot;")
+                v = v.replace('\r','')
+                v = v.replace('\n','<br>')
+            translated_fields.append( (f, v)  )
 
         context = {
             'title':  _('Translation %s') % force_unicode(opts.verbose_name),
+            'tiny_mce': True,
             'adminform': adminForm, 'original': obj,
             'translated_fields': translated_fields, 'master_language': master_language,
             'is_popup': ('_popup' in request.REQUEST),
@@ -336,5 +428,11 @@ class TranslationModelAdmin(admin.ModelAdmin):
         translation.activate(cur_language)
         self.lang = None
         ctx = RequestContext(request, current_app=self.admin_site.name)
-        return render_to_response(CHANGE_TRANSLATION_TPL, context,
+        change_form_template =  [
+            "admin/%s/%s/change_form.html" % (opts.app_label, opts.object_name.lower()),
+            CHANGE_TRANSLATION_TPL,
+            "admin/%s/change_form.html" % opts.app_label,
+            "admin/change_form.html",
+        ]
+        return render_to_response(change_form_template , context,
                                   context_instance=ctx)

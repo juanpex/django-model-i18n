@@ -19,7 +19,9 @@
 {% else %}{{ block.super }}{% endif %}<form>{% include "i18n/admin/language_links.html" %}</form>
 {% endblock %}
 
+
 {% block extrastyle %}{{ block.super }}
+{% comment %}
 <script type="text/javascript" src="/static/admin/js/jquery.min.js"></script>
 <script src="http://www.google.com/jsapi" type="text/javascript"></script>
 <script type="text/javascript">
@@ -35,13 +37,21 @@
 
     $('a.suggest').click(function() {
         var a=$(this)
+        tymc = a.f
         orig = a.next().val();
         trans = $("#"+a.attr('rel'));
+        editor = trans.parent().find('.mceEditor');
         orig = unescape(orig).replace(/<br\s?\/?>/g,'\n').replace(/<code>/g,'').replace(/<\/code>/g,'').replace(/&gt;/g,'>').replace(/&lt;/g,'<');
         a.attr('class','suggesting').html('...');
         google.language.translate(orig, '{{master_language}}', '{{lang}}', function(result) {
             if (!result.error) {
-                trans.val(unescape(result.translation).replace(/&#39;/g,'\'').replace(/&quot;/g,'"').replace(/%\s+(\([^\)]+\))\s*s/g,' %$1s '));
+                value = unescape(result.translation).replace(/&#39;/g,'\'').replace(/&quot;/g,'"').replace(/%\s+(\([^\)]+\))\s*s/g,' %$1s ');
+                console.log(editor)
+                if(editor.length==0) {
+                    trans.val(value);
+                } else {
+                    $(editor).find('iframe').contents().find('body').html(value)
+                }
                 a.hide();
             } else {
                 a.hide().before($('<span class="alert">'+result.error.message+'</span>'));
@@ -54,21 +64,21 @@
 
 //-->
 </script>
-<script type="text/javascript">
-</script>
+{% endcomment %}
 {% endblock %}
 
 {% block object-tools %}
+{% comment %}
 <script type="text/javascript">
 (function($) {
     $(document).ready(function() {
         {% for f, v in translated_fields %}
-        $('.form-row.{{ n }} input').each(function () {
-          $(this).after('<p><a rel="'+$(this).attr('id')+'" href="#" class="suggest">Suggest</a><input type="hidden" id="tmp_{{ f }}" value="{{ v }}" /></p>');
+        $('.form-row.{{ f }} input[type=text], .form-row.{{ f }} textarea').each(function () {
+          $(this).after('<p><a rel="'+$(this).attr('id')+'" href="#" class="suggest">Suggest</a><input type="hidden" id="tmp_{{ f }}" value="{{ v|escape }}" /></p>');
         });
         {% endfor %}
     });
 })(jQuery);
 </script>
-
+{% endcomment %}
 {% endblock %}

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
 from django.db import models
-
 # Translation model's common field default names.
 # If you want to get a field name for a specific translation model remember it
 # may have been overriden in the ModelTranslation definition, don't import

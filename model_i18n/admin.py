@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import warnings
 from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
 
@@ -7,11 +8,11 @@ from model_i18n.exceptions import OptionWarning
 from model_i18n.utils import get_translation_opt
 
 
-def setup_admin(master_model, translation_model):
+def setup_admin(master_model, translation_model, adminsite):
     """
     Setup django.contrib,admin support.
     """
-    madmin = admin.site._registry.get(master_model)
+    madmin = adminsite._registry.get(master_model)
 
     # if app not define modeladmin exit setup
     if not madmin:
@@ -35,29 +36,32 @@ def setup_admin(master_model, translation_model):
     admintranslation_class = type('%sTranslationAdmin' % \
             master_model.__name__, (TranslationModelAdmin,), options)
 
-    admin.site.unregister(master_model)
-    admin.site.register(master_model, admintranslation_class)
-    madmin = admin.site._registry.get(master_model)
+    adminsite.unregister(master_model)
+    adminsite.register(master_model, admintranslation_class)
+    madmin = adminsite._registry.get(master_model)
     maclass = madmin.__class__
 
-    trans_inlines = get_translation_opt(master_model, 'inlines')
+    trans_inlines = madmin.inlines
     if not trans_inlines:
         return
 
     for i in madmin.inlines:
         if i.model in [t.model for t in trans_inlines]:
             inline_base_class = i.__bases__[0]
+            inline_base_class.base_template = inline_base_class.template
+            inline_base_class.template = 'i18n/admin/edit_inline.html'
             iac = type("%sTranslator" % (i.__name__), (inline_base_class,), {})
             inline_admin_class = iac
             inline_admin_class.model = i.model
             maclass.i18n_inlines.append(inline_admin_class)
 
     for iclass in maclass.i18n_inlines:
-        inline_instance = iclass(master_model._translation_model, admin.site)
+        inline_instance = iclass(master_model._translation_model, adminsite)
         maclass.i18n_inline_instances.append(inline_instance)
 
-    admin.site.unregister(master_model)
-    admin.site.register(master_model, madmin)
+    return
+    adminsite.unregister(master_model)
+    adminsite.register(master_model, madmin)
 
 
 

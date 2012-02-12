@@ -53,16 +53,24 @@ class Translator(object):
             from model_i18n.validation import validate
             validate(translation_class, master_model)
 
+        transmanager_class = type('%sTransManager' % master_model.__name__, (TransManager, master_model.objects.__class__,), {})
+        livetransmanager_class = transmanager_class
+        try:
+            livetransmanager_class = type('%sLiveTransManager' % master_model.__name__, (TransManager, master_model.live_objects.__class__,), {})
+        except:
+            pass
+
         master_model.add_to_class('_default_manager', TransManager())
         master_model.add_to_class('_base_manager', TransManager())
-        master_model.add_to_class('objects', TransManager())
-        master_model.add_to_class('live_objects', TransManager())
+        master_model.add_to_class('objects', transmanager_class())
+        master_model.add_to_class('live_objects', livetransmanager_class())
 
         opts = translation_class(master_model)
 
         # Set up master_model as a multilingual model
         # using translation_class options
         tmodel = self.create_translation_model(master_model, opts)
+        tmodel.__unicode__ = lambda s: unicode(getattr(s, s._transmeta.master_field_name))
         defaults = {'blank': True, 'null': True, 'editable': False}
         m2mfield = models.ManyToManyField(tmodel, **defaults)
         master_model.add_to_class("translations", m2mfield)
@@ -147,7 +155,6 @@ class Translator(object):
             newfield.primary_key = False
 
             attrs[newfield.name] = newfield
-
         # setup i18n languages on master model for easier access
         master_model.i18n_languages = settings.LANGUAGES
         master_model.i18n_default_language = opts.master_language
