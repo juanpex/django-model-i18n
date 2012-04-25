@@ -118,7 +118,7 @@ Deleting
     Item.objects.set_language("fr").filter(translations__title__contains='titres à éliminer').delete()
 
 
-Actualmente el proyecto test_project tiene algunos test simples.
+Currently the project test_project has some simple tests.
 
 
 
