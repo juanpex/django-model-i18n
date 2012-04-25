@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-def get_default_language():
+def get_default_language2():
     """ Gets default project language from
     settings.TRANSLATIONS_DEFAULT_LANGUAGE
     if defined, or uses LANGUAGE_CODE

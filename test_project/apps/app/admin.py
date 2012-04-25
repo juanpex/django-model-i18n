@@ -3,6 +3,7 @@ from django.contrib import admin
 
 from app.models import Item
 
+
 class ItemAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
 

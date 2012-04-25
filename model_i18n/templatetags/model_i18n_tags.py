@@ -2,7 +2,6 @@
 from django import template
 
 
-
 class GetAttrFromInstanceNode(template.Node):
     def __init__(self, obj, attrname, var=None):
         self.obj = template.Variable(obj)

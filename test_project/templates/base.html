@@ -2,7 +2,7 @@
 <body>
 
 {% for lang in LANGUAGES %}
-<a href="{% url setlang %}?language={{ lang.0 }}">{{ lang.1 }}</a>
+<a style="color:{% ifequal lang.0 LANGUAGE_CODE %}red{% else %}black{% endifequal %};" href="{% url setlang %}?language={{ lang.0 }}">{{ lang.1 }}</a>
 {% endfor %}
 
 {% if messages %}
@@ -17,10 +17,10 @@
 
 {% block content %}
 <ul>
-{% for item in item_list %}
-<li><a href="/item/{{ item.slug }}">{{ item.title }}</a></li>
-{% endfor %}
-<ul>
+    {% for item in item_list %}
+    <li><a href="/item/{{ item.slug }}">{{ item.title }}</a></li>
+    {% endfor %}
+</ul>
 {% endblock %}
 
 </body>

@@ -18,17 +18,16 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
+from django import forms
+from django.utils.safestring import mark_safe
 
 from model_i18n.conf import CHANGE_TPL, CHANGE_TRANSLATION_TPL
 from model_i18n.decorators import autotranslate_view
 from model_i18n.utils import get_translation_opt
 
+
 csrf_protect_m = method_decorator(csrf_protect)
 
-
-
-from django import forms
-from django.utils.safestring import mark_safe
 
 class SpanWidget(forms.Widget):
     '''Renders a value wrapped in a <span> tag.
@@ -73,6 +72,7 @@ class SpanField(forms.Field):
         kwargs['widget'] = kwargs.get('widget', SpanWidget)
         super(SpanField, self).__init__(*args, **kwargs)
 
+
 class Readonly(object):
     '''Base class for ReadonlyForm and ReadonlyModelForm which provides
     the meat of the features described in the docstings for those classes.
@@ -101,8 +101,6 @@ class Readonly(object):
             field.widget.original_value = display_value
 
 
-
-
 class TranslationModelAdmin(admin.ModelAdmin):
 
     lang = None
@@ -117,7 +115,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urls = super(TranslationModelAdmin, self).get_urls()
+        info = self.model._meta.app_label, self.model._translation_model._meta.module_name
         return urls[:-1] + patterns('',
+            url(r'^$', self.changelist_view, name='%s_%s_changelist' % info),
             url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2})/$',
                 self.i18n_change_view),
             url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2}-[a-z]{2})/$',
@@ -158,10 +158,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
         returned if no match is found (or the object_id failed validation
         against the primary key field).
         """
-        #import pdb; pdb.set_trace()
         queryset = self.i18n_queryset(request)
         model = queryset.model
-        args = {'_language': language.replace("-",""), '_master': master}
+        args = {'_language': language.replace("-", ""), '_master': master}
         try:
             #object_id = model._meta.pk.to_python(object_id)
             return queryset.get(**args)
@@ -207,7 +206,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
         return super(TranslationModelAdmin, self).get_fieldsets(request, obj)
 
     def get_i18n_formsets(self, request, obj=None):
-        for inline in self.get_inline_instances():
+        for inline in self.get_inline_instances(request):
             defaults = {
                 'can_delete': False,
                 'extra': 0,
@@ -216,9 +215,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
             }
             yield inline.get_formset(request, obj, **defaults)
 
-    def get_inline_instances(self):
+    def get_inline_instances(self, request):
         return [inline for inline in \
-        self.inline_instances if inline.model in \
+        super(TranslationModelAdmin, self).get_inline_instances(request) if inline.model in \
         [i18n_inline.model for i18n_inline in self.i18n_inlines]]
 
     def get_form(self, request, obj=None, **kw):
@@ -242,7 +241,6 @@ class TranslationModelAdmin(admin.ModelAdmin):
 
         return TransInlineFormSet
 
-
     def get_inline_form(self, inline):
 
         class TransInlineForm(inline.form):
@@ -251,7 +249,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 super(TransInlineForm, self).__init__(*args, **kwargs)
                 for fn in self.fields:
                     if fn not in self.i18n_fields:
-                        self.fields[fn].widget = SpanPostWidget() #forms.HiddenInput()
+                        self.fields[fn].widget = SpanPostWidget()  # forms.HiddenInput()
                         if self.instance.pk:
                             val = getattr(self.instance, fn, '')
                             self.fields[fn].widget.original_value = val.pk if hasattr(val, 'pk') else val
@@ -264,8 +262,6 @@ class TranslationModelAdmin(admin.ModelAdmin):
                         #     self.fields[fn].widget.choices = choices
                         # else:
                         #     self.fields[fn].widget.attrs['DISABLED'] = 'DISABLED'
-
-
 
             def save(self, *args, **kwargs):
                 kwargs['commit'] = False
@@ -305,7 +301,6 @@ class TranslationModelAdmin(admin.ModelAdmin):
         opts = model._meta
         self.lang = language
 
-
         obj = self.get_object(request, unquote(object_id))
 
         Tobj = self.get_i18n_object(request, unquote(object_id), obj, language)
@@ -338,7 +333,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 new_object = Tobj
             prefixes = {}
             for FormSet, inline in zip(self.get_formsets(request, new_object),
-                                       self.get_inline_instances()):
+                                       self.get_inline_instances(request)):
                 prefix = FormSet.get_default_prefix()
                 prefixes[prefix] = prefixes.get(prefix, 0) + 1
                 if prefixes[prefix] != 1:
@@ -370,7 +365,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
             prefixes = {}
             for FormSet, inline in \
                 zip(self.get_formsets(request, Tobj._master), \
-                    self.get_inline_instances()):
+                    self.get_inline_instances(request)):
 
                 prefix = FormSet.get_default_prefix()
                 prefixes[prefix] = prefixes.get(prefix, 0) + 1
@@ -386,7 +381,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
         media = self.media + adminForm.media
 
         inline_admin_formsets = []
-        for inline, formset in zip(self.get_inline_instances(), formsets):
+        for inline, formset in zip(self.get_inline_instances(request), formsets):
             fieldsets = list(inline.get_fieldsets(request))
             readonly = list(inline.get_readonly_fields(request))
             inline_admin_formset = helpers.InlineAdminFormSet(inline, formset,
@@ -403,9 +398,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
             v = v or ''
             if hasattr(v, 'replace'):
                 v = v.replace("'", "&#39;").replace('"', "&quot;")
-                v = v.replace('\r','')
-                v = v.replace('\n','<br>')
-            translated_fields.append( (f, v)  )
+                v = v.replace('\r', '')
+                v = v.replace('\n', '<br>')
+            translated_fields.append((f, v))
 
         context = {
             'title':  _('Translation %s') % force_unicode(opts.verbose_name),
@@ -414,7 +409,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
             'translated_fields': translated_fields, 'master_language': master_language,
             'is_popup': ('_popup' in request.REQUEST),
             'errors': admin.helpers.AdminErrorList(form, []),
-            'root_path': self.admin_site.root_path,
+            #'root_path': self.admin_site.root_path,
             'app_label': opts.app_label, 'trans': True, 'lang': language,
             'current_language': dict(settings.LANGUAGES)[language],
             'inline_admin_formsets': inline_admin_formsets,
@@ -428,11 +423,10 @@ class TranslationModelAdmin(admin.ModelAdmin):
         translation.activate(cur_language)
         self.lang = None
         ctx = RequestContext(request, current_app=self.admin_site.name)
-        change_form_template =  [
+        change_form_template = [
             "admin/%s/%s/change_form.html" % (opts.app_label, opts.object_name.lower()),
             CHANGE_TRANSLATION_TPL,
             "admin/%s/change_form.html" % opts.app_label,
             "admin/change_form.html",
         ]
-        return render_to_response(change_form_template , context,
-                                  context_instance=ctx)
+        return render_to_response(change_form_template, context, context_instance=ctx)

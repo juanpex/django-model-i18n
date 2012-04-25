@@ -4,16 +4,18 @@ import new
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import models, transaction
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from model_i18n import managers
-from model_i18n.admin import setup_admin
+from django.db import transaction
+
 from model_i18n.conf import CURRENT_LANGUAGES, CURRENT_LANGUAGE, \
      ATTR_BACKUP_SUFFIX, MODEL_I18N_DJANGO_ADMIN
 from model_i18n.exceptions import AlreadyRegistered
 from model_i18n.managers import TransManager
 from model_i18n.options import ModelTranslation
-from model_i18n.utils import import_module
+from model_i18n.utils import import_module, get_translation_opt
+
 
 __all__ = ['register', 'ModelTranslation']
 
@@ -32,8 +34,6 @@ class Translator(object):
             app_path = ".".join(master_model.split(".")[:-1])
             master_module_models = import_module(app_path + '.models')
             master_model = getattr(master_module_models, master_model.split(".")[-1])
-            #print master_model
-            #return
         if master_model in self._registry:
             raise AlreadyRegistered('The model "%s" has is already \
             registered for translation' % master_model.__name__)
@@ -89,9 +89,8 @@ class Translator(object):
         if opts.master_language not in dict(settings.LANGUAGES):
             from model_i18n.exceptions import OptionWarning
             msg = '\nCode language "%s" not exist: Avaible languages are: %s.\n The model %s take master languages "%s"' % \
-            (opts.master_language , " ".join(dict(settings.LANGUAGES).keys()), master_model.__name__, settings.MODEL_I18N_MASTER_LANGUAGE)
+            (opts.master_language, " ".join(dict(settings.LANGUAGES).keys()), master_model.__name__, settings.MODEL_I18N_MASTER_LANGUAGE)
             print OptionWarning(msg)
-
 
         # creates unique_together for master_model
         trans_unique_together = []
@@ -181,15 +180,35 @@ def trans_save(method):
 
     def wrapper(self, *args, **kwargs):
         obj = self
+        values = kwargs.pop('values', {})
+        delete = kwargs.pop('delete', False)
         if hasattr(self, 'current_language'):
             if self.current_language \
             and self.current_language != self.i18n_default_language:
-                obj = i18n_save(obj, self.current_language)
+                obj = i18n_save(obj, self.current_language, values, delete)
         else:
             obj = method(self, *args, **kwargs)
         return obj
 
     return wrapper
+
+
+@transaction.commit_on_success
+def i18n_save(instance, language, values={}, delete=False):
+    if language not in dict(settings.LANGUAGES):
+        raise ValueError(_('Incorrect language %(lang)s') % {'lang': language})
+
+    master_language = get_translation_opt(instance, 'master_language')
+    if language == master_language:
+        return instance.save()
+
+    trans_id = getattr(instance, 'id_%s' % language, None)
+    if not trans_id:
+        raise ValueError('Translation has no ID')
+    if delete:
+        instance._translation_model.objects.filter(id=trans_id).delete()
+    else:
+        return instance._translation_model.objects.filter(id=trans_id).update(**values)
 
 
 def lang(instance, lang=None):

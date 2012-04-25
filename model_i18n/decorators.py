@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from model_i18n import set_do_autotrans, get_do_autotrans
+from model_i18n import set_do_autotrans
 
 
 def autotranslate_view(fun):

@@ -3,7 +3,15 @@
 {% block content %}
 <a href="/">Back</a>
 <br>
-<h1> {{ item.slug }}</h1>
-<p>{{ item.title }}</p>
+<h1>LANG {{ LANGUAGE_CODE }}</h1>
+<p>
+<label>Slug:</label> <strong>{{ item.slug }}</strong>
+</p>
+<p>
+<label>Title:</label> <strong>{{ item.title }}</strong>
+</p>
+<p>
+<label>Content:</label> <strong>{{ item.content }}</strong>
+</p>
 {% endblock %}
 

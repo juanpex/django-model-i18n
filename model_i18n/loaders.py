@@ -10,10 +10,10 @@ def autodiscover(module_name='translations'):
 
     Based on django's contrib.admin autodiscover().
     """
+
     import imp
     from model_i18n.utils import import_module
     from django.conf import settings
-
 
     for app in settings.INSTALLED_APPS:
         # For each app, we need to look for `module_name` in that app's
@@ -37,7 +37,7 @@ def autodiscover(module_name='translations'):
         # its `module_name` doesn't exist
         try:
             imp.find_module(module_name, app_path)
-        except ImportError, e:
+        except ImportError:
             continue
 
         # Step 3: import the app's translation file.
@@ -61,7 +61,6 @@ def autodiscover(module_name='translations'):
 
 
 def autodiscover_admin(adminsite=None):
-
     if not adminsite:
         from django.contrib.admin import site
         adminsite = site

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import warnings
+
 from django.conf.urls.defaults import patterns, url
-from django.contrib import admin
 
 from model_i18n.conf import CHANGE_TPL
 from model_i18n.exceptions import OptionWarning
-from model_i18n.utils import get_translation_opt
 
 
 def setup_admin(master_model, translation_model, adminsite):
@@ -64,7 +63,6 @@ def setup_admin(master_model, translation_model, adminsite):
     adminsite.register(master_model, madmin)
 
 
-
 def get_options_base_fields(base):
     attr_names = [
     'list_display',
@@ -92,7 +90,7 @@ def get_options_base_fields(base):
     'fieldsets'
     ]
     for attr in dict(base.__dict__):
-         if not attr in attr_names and not attr in ('__module__', '__doc__', 'media', 'prepopulated_fields'):
+        if not attr in attr_names and not attr in ('__module__', '__doc__', 'media', 'prepopulated_fields'):
             attr_names.append(attr)
 
     options = {}

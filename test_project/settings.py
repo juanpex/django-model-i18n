@@ -18,6 +18,8 @@ MODEL_I18N_MASTER_LANGUAGE = LANGUAGE_CODE
 PROJECT_DIR = dirname(abspath(__file__))
 sys.path.append(PROJECT_DIR)
 sys.path.append(join(PROJECT_DIR, '..'))
+sys.path.append(join(PROJECT_DIR, 'apps'))
+
 
 SOUTH_TESTS_MIGRATE = False
 
@@ -26,12 +28,13 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+    'model_i18n',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.messages',
     'django.contrib.admin',
-    'model_i18n',
-    'test_project.app',
+    'app',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -42,15 +45,36 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.locale.LocaleMiddleware',
 )
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.core.context_processors.auth',
-    'django.core.context_processors.debug',
-    'django.core.context_processors.i18n',
-    'django.core.context_processors.request',
+TEMPLATE_LOADERS = (
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
 )
 
+# Context Processors
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.core.context_processors.media',
+    'django.core.context_processors.static',
+    'django.core.context_processors.request',
+    'django.contrib.auth.context_processors.auth',
+)
+
+
+MIDDLEWARE_CLASSES += ('django.middleware.locale.LocaleMiddleware',)
+TEMPLATE_CONTEXT_PROCESSORS += ('django.core.context_processors.i18n',)
+
+if 'django.contrib.messages' in INSTALLED_APPS:
+    TEMPLATE_CONTEXT_PROCESSORS += \
+        ('django.contrib.messages.context_processors.messages',)
+    MIDDLEWARE_CLASSES += \
+        ('django.contrib.messages.middleware.MessageMiddleware',)
+
+MEDIA_ROOT = PROJECT_DIR + '/media/'
+
 MEDIA_URL = '/media/'
-ADMIN_MEDIA_PREFIX = '/admin_media/'
+
+STATIC_ROOT = PROJECT_DIR + '/static/'
+
+STATIC_URL = '/static/'
 
 ROOT_URLCONF = 'test_project.urls'
 
@@ -85,10 +109,13 @@ JUNIT_OUTPUT_DIR = join(
     'junit-dj%s-py%s' % (DJANGO_VERSION, PYTHON_VERSION)
 )
 
-TEST_RUNNER = 'test_project.testrunner.TestSuiteRunner'
-
-
 try:
     from local_settings import *
 except ImportError:
-    pass
+    NEW_INSTALLED_APPS = ()
+    NEW_MIDDLEWARE_CLASSES = ()
+    NEW_TEMPLATE_CONTEXT_PROCESSORS = ()
+
+INSTALLED_APPS += NEW_INSTALLED_APPS
+MIDDLEWARE_CLASSES += NEW_MIDDLEWARE_CLASSES
+TEMPLATE_CONTEXT_PROCESSORS += NEW_TEMPLATE_CONTEXT_PROCESSORS
