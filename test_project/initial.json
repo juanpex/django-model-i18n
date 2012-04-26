@@ -1,0 +1,33 @@
+[
+    {
+        "pk": 1,
+        "model": "app.item",
+        "fields": {
+            "content": "Content 1",
+            "translations": [],
+            "slug": "title-1",
+            "title": "Title 1"
+        }
+    },
+    {
+        "pk": 1,
+        "model": "app.itemtranslation",
+        "fields": {
+            "content": "Contenido 1",
+            "_language": "es",
+            "_master": 1,
+            "title": "T\u00edtulo 1"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "app.itemtranslation",
+        "fields": {
+            "content": "Contenu 1",
+            "_language": "fr",
+            "_master": 1,
+            "title": "Titre 1"
+        }
+    }
+]
+

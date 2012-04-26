@@ -62,8 +62,13 @@ def _load_conf(*args, **kwargs):
         import_module(settings.MODEL_I18N_CONF)
 
 
-def ensure_models(sender, **kwargs):
+def ensure_models(**kwargs):
+    stack = inspect.stack()
+    for stack_info in stack[1:]:
+        if '_load_conf' in stack_info[3]:
+            return
     from model_i18n import loaders
     loaders.autodiscover()
 
-signals.class_prepared.connect(ensure_models)
+ensure_models()
+# signals.class_prepared.connect(ensure_models)
