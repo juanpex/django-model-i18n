@@ -64,28 +64,21 @@ Usage
 
     translator.register(Item, ItemTranslation)
 
-Translations may also be recorded in this way
-
-    from model_i18n import translator
-
-    class ItemTranslation(translator.ModelTranslation):
-        fields = ('title',)
-
-    translator.register('app.models.Item', ItemTranslation)
-
-
 Notes
 =====
 
 If you will translate models that are into django.contrib.* such as flatpages
-put this on settings:
+you can create in your root project directory a file named translations.py and handle
+other third parties apps.models like this::
+    
+    from model_i18n import translator
+    from django.contrib.flatpages.models import FlatPage
 
-    TRANSLATED_APP_MODELS['django.contrib.flatpages'] = {
-        'FlatPage': {
-        'fields': ('title', 'content'),
-        'master_language': 'es',
-        }
-    }
+    class FlatPageTranslation(translator.ModelTranslation):
+        fields = ('title', 'content')
+    
+    translator.register(FlatPage, FlatPageTranslation)
+
 
 and if you need use south you must use SOUTH_MIGRATION_MODULES setting like this::
 
@@ -102,6 +95,8 @@ API EXAMPLES
 Filtering
 ---------
 
+Code::
+
     Item.objects.set_language("es").filter(translations__title__contains='sometext')
     items = Item.objects.filter(Q(translations___language='en') | Q(translations___language='es'))
 
@@ -111,14 +106,17 @@ Filtering
 
 Updating
 ---------
-    Item.objects.set_language("es").filter(translations__title__contains='sometext').update(title=u'new text')
+   
+Code::
+
+   Item.objects.set_language("es").filter(translations__title__contains='sometext').update(title=u'new text')
 
 Deleting
 ---------
+
+Code::
+
     Item.objects.set_language("fr").filter(translations__title__contains='titres à éliminer').delete()
-
-
-Currently the project test_project has some simple tests.
 
 
 
