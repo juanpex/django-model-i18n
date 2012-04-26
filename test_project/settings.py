@@ -27,22 +27,30 @@ TEMPLATE_DIRS = (
     join(PROJECT_DIR, "templates"),
 )
 
+SITE_ID = 1
+
 INSTALLED_APPS = (
     'model_i18n',
-    'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.auth',
     'django.contrib.sessions',
+    'django.contrib.sites',
     'django.contrib.messages',
+    'django.contrib.flatpages',
     'django.contrib.admin',
+    'south',
     'app',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.middleware.doc.XViewMiddleware',
+    ## IF CACHE MIDDLEWARE IS SETTING PUT HERE
     'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 )
 
 TEMPLATE_LOADERS = (
@@ -56,11 +64,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.static',
     'django.core.context_processors.request',
     'django.contrib.auth.context_processors.auth',
+    'django.core.context_processors.i18n',
 )
-
-
-MIDDLEWARE_CLASSES += ('django.middleware.locale.LocaleMiddleware',)
-TEMPLATE_CONTEXT_PROCESSORS += ('django.core.context_processors.i18n',)
 
 if 'django.contrib.messages' in INSTALLED_APPS:
     TEMPLATE_CONTEXT_PROCESSORS += \
@@ -108,6 +113,10 @@ JUNIT_OUTPUT_DIR = join(
     '..',
     'junit-dj%s-py%s' % (DJANGO_VERSION, PYTHON_VERSION)
 )
+
+SOUTH_MIGRATION_MODULES = {
+    'flatpages': 'migrations.flatpages'
+}
 
 try:
     from local_settings import *

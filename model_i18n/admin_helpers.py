@@ -182,6 +182,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
         # if exclude is an empty list we pass None to be consistant with the
         # default on modelform_factory
         exclude = exclude or None
+        for field in list(self.form.declared_fields.keys()):
+            if field not in fields:
+                self.form.declared_fields.pop(field)
         formfield_callback = curry(self.formfield_for_dbfield, request=request)
         defaults = {
             "form": self.form,
@@ -191,6 +194,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
         }
         defaults.update(kwargs)
         f = modelform_factory(self.Tmodel, **defaults)
+        f.clean = lambda s: s.cleaned_data
         return f
 
     def get_formsets(self, request, obj=None):

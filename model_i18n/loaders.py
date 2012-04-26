@@ -16,6 +16,8 @@ def autodiscover(module_name='translations'):
     from django.conf import settings
 
     for app in settings.INSTALLED_APPS:
+        if app == 'model_i18n':
+            continue
         # For each app, we need to look for `module_name` in that app's
         # package. We can't use os.path here -- recall that modules may be
         # imported different ways (think zip files) -- so we need to get
@@ -44,20 +46,12 @@ def autodiscover(module_name='translations'):
         # If this has errors we want them to bubble up.
         import_module('.'.join([app, module_name]))
 
-    from model_i18n import translator
-    from model_i18n.conf import TRANSLATED_APP_MODELS
-    from django.core.exceptions import ImproperlyConfigured
-
-    for app_path in TRANSLATED_APP_MODELS:
-        model_conf = TRANSLATED_APP_MODELS[app_path]
-        for model_name in model_conf:
-            model_module = import_module(app_path + '.models')
-            try:
-                django_model = getattr(model_module, model_name)
-            except:
-                raise ImproperlyConfigured("Model %s does not exist on %s" % \
-                    (model_name, app_path))
-            translator.register(django_model, **model_conf[model_name])
+    project_dir = dirname(import_module(settings.SETTINGS_MODULE).__file__)
+    try:
+        imp.find_module(module_name, [project_dir, ])
+    except ImportError:
+        return
+    import_module('.'.join(['test_project', module_name]))
 
 
 def autodiscover_admin(adminsite=None):
