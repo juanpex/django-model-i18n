@@ -144,7 +144,7 @@ class TransQuerySet(QuerySet):
 
     def delete(self, *args, **kwargs):
         if self.lang and self.lang != get_master_language(self.model):
-            for obj in self:
+            for obj in list(self):
                 obj.save(delete=True)
             return None
         return super(TransQuerySet, self).delete(*args, **kwargs)
@@ -152,7 +152,7 @@ class TransQuerySet(QuerySet):
     def update(self, *args, **kwargs):
         if self.lang and self.lang != get_master_language(self.model):
             update_count = 0
-            for obj in self:
+            for obj in list(self):
                 update_count += obj.save(values=kwargs)
             return update_count
         return super(TransQuerySet, self).update(*args, **kwargs)

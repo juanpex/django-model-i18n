@@ -201,10 +201,10 @@ def i18n_save(instance, language, values={}, delete=False):
     master_language = get_translation_opt(instance, 'master_language')
     if language == master_language:
         return instance.save()
-
     trans_id = getattr(instance, 'id_%s' % language, None)
-    if not trans_id:
-        raise ValueError('Translation has no ID')
+    if not trans_id and delete:
+        # This objects has no translation to language "language"
+        return
     if delete:
         instance._translation_model.objects.filter(id=trans_id).delete()
     else:
