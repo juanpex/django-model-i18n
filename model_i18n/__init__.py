@@ -10,7 +10,7 @@ import patches
 from utils import import_module
 
 
-VERSION = (0, 3, 0, 'beta', 0)
+VERSION = (0, 4, 0, 'alpha', 0)
 _active = local()
 
 
