@@ -13,5 +13,13 @@
 <p>
 <label>Content:</label> <strong>{{ item.content }}</strong>
 </p>
+{% if item.items.all.0  %}
+    <h2>Items</h2>
+    <ul>
+    {% for rel in item.items.all %}
+        <li><label>{{ rel.value }}</label><p>{{ rel.data }}</p></li>
+    {% endfor %}
+    </ul>
+{% endif %}
 {% endblock %}
 

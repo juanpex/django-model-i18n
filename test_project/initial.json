@@ -1,33 +1,125 @@
 [
-    {
-        "pk": 1,
-        "model": "app.item",
-        "fields": {
-            "content": "Content 1",
-            "translations": [],
-            "slug": "title-1",
-            "title": "Title 1"
-        }
-    },
-    {
-        "pk": 1,
-        "model": "app.itemtranslation",
-        "fields": {
-            "content": "Contenido 1",
-            "_language": "es",
-            "_master": 1,
-            "title": "T\u00edtulo 1"
-        }
-    },
-    {
-        "pk": 2,
-        "model": "app.itemtranslation",
-        "fields": {
-            "content": "Contenu 1",
-            "_language": "fr",
-            "_master": 1,
-            "title": "Titre 1"
-        }
+  {
+    "pk": 1,
+    "model": "app.item",
+    "fields": {
+      "content": "Content 1",
+      "translations": [],
+      "slug": "title-1",
+      "title": "Title 1"
     }
+  },
+  {
+    "pk": 1,
+    "model": "app.relateditem",
+    "fields": {
+      "translations": [
+        1,
+        4
+      ],
+      "item": 1,
+      "data": "Data 1",
+      "value": 1
+    }
+  },
+  {
+    "pk": 2,
+    "model": "app.relateditem",
+    "fields": {
+      "translations": [
+        2,
+        5
+      ],
+      "item": 1,
+      "data": "Data 2",
+      "value": 2
+    }
+  },
+  {
+    "pk": 3,
+    "model": "app.relateditem",
+    "fields": {
+      "translations": [
+        3,
+        6
+      ],
+      "item": 1,
+      "data": "Data 3",
+      "value": 3
+    }
+  },
+  {
+    "pk": 1,
+    "model": "app.itemtranslation",
+    "fields": {
+      "content": "Contenido 1",
+      "_language": "es",
+      "_master": 1,
+      "title": "T\u00edtulo 1"
+    }
+  },
+  {
+    "pk": 2,
+    "model": "app.itemtranslation",
+    "fields": {
+      "content": "Contenu 1",
+      "_language": "fr",
+      "_master": 1,
+      "title": "Titre 1"
+    }
+  },
+  {
+    "pk": 1,
+    "model": "app.relateditemtranslation",
+    "fields": {
+      "_language": "es",
+      "_master": 1,
+      "value": 10
+    }
+  },
+  {
+    "pk": 2,
+    "model": "app.relateditemtranslation",
+    "fields": {
+      "_language": "es",
+      "_master": 2,
+      "value": 20
+    }
+  },
+  {
+    "pk": 3,
+    "model": "app.relateditemtranslation",
+    "fields": {
+      "_language": "es",
+      "_master": 3,
+      "value": 30
+    }
+  },
+  {
+    "pk": 4,
+    "model": "app.relateditemtranslation",
+    "fields": {
+      "_language": "fr",
+      "_master": 1,
+      "value": 111
+    }
+  },
+  {
+    "pk": 5,
+    "model": "app.relateditemtranslation",
+    "fields": {
+      "_language": "fr",
+      "_master": 2,
+      "value": 222
+    }
+  },
+  {
+    "pk": 6,
+    "model": "app.relateditemtranslation",
+    "fields": {
+      "_language": "fr",
+      "_master": 3,
+      "value": 333
+    }
+  }
 ]
-

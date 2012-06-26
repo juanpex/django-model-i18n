@@ -25,4 +25,4 @@ class RelatedItem(models.Model):
     data = models.CharField(max_length=15, default='')
 
     def __unicode__(self):
-        return self.value
+        return unicode(self.value)

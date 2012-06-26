@@ -29,7 +29,8 @@ class GetAttrFromInstanceNode(template.Node):
         if callable(data):
             data = data()
         data = data or ''
-        data = data.replace("'", "&#39;").replace('"', "&quot;")
+        if isinstance(data, (unicode, str)):
+            data = data.replace("'", "&#39;").replace('"', "&quot;")
         if self.var:
             context.update({self.var: data})
             return ''

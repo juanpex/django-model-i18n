@@ -182,9 +182,10 @@ class TranslationModelAdmin(admin.ModelAdmin):
         # if exclude is an empty list we pass None to be consistant with the
         # default on modelform_factory
         exclude = exclude or None
-        for field in list(self.form.declared_fields.keys()):
-            if field not in fields:
-                self.form.declared_fields.pop(field)
+        if self.form and hasattr(self.form, 'declared_fields'):
+            for field in list(self.form.declared_fields.keys()):
+                if field not in fields:
+                    self.form.declared_fields.pop(field)
         formfield_callback = curry(self.formfield_for_dbfield, request=request)
         defaults = {
             "form": self.form,
@@ -379,8 +380,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
                                   queryset=None)
                 formsets.append(formset)
 
-        adminForm = helpers.AdminForm(form, self.get_fieldsets(request, obj),
-            self.prepopulated_fields, self.get_readonly_fields(request, obj),
+        adminForm = helpers.AdminForm(form, list(self.get_fieldsets(request)),
+            self.get_prepopulated_fields(request),
+            self.get_readonly_fields(request),
             model_admin=self)
         media = self.media + adminForm.media
 
@@ -388,8 +390,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
         for inline, formset in zip(self.get_inline_instances(request), formsets):
             fieldsets = list(inline.get_fieldsets(request))
             readonly = list(inline.get_readonly_fields(request))
+            prepopulated = dict(inline.get_prepopulated_fields(request))
             inline_admin_formset = helpers.InlineAdminFormSet(inline, formset,
-                fieldsets, readonly, model_admin=self)
+                fieldsets, prepopulated, readonly, model_admin=self)
             inline_admin_formsets.append(inline_admin_formset)
             media = media + inline_admin_formset.media
 
