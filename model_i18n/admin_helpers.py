@@ -220,9 +220,24 @@ class TranslationModelAdmin(admin.ModelAdmin):
             }
             yield inline.get_formset(request, obj, **defaults)
 
+    def get_prepopulated_fields(self, request):
+        # FIX for 1.3
+        superadmin = super(TranslationModelAdmin, self)
+        if hasattr(superadmin, 'get_prepopulated_fields'):
+            prepopulated_fields = superadmin.get_prepopulated_fields(request)
+        else:
+            prepopulated_fields = self.prepopulated_fields
+        return prepopulated_fields
+
     def get_inline_instances(self, request):
+        # FIX for 1.3
+        superadmin = super(TranslationModelAdmin, self)
+        if hasattr(superadmin, 'get_inline_instances'):
+            inline_instances = superadmin.get_inline_instances(request)
+        else:
+            inline_instances = self.inline_instances
         return [inline for inline in \
-        super(TranslationModelAdmin, self).get_inline_instances(request) if inline.model in \
+        inline_instances if inline.model in \
         [i18n_inline.model for i18n_inline in self.i18n_inlines]]
 
     def get_form(self, request, obj=None, **kw):
@@ -386,13 +401,25 @@ class TranslationModelAdmin(admin.ModelAdmin):
             model_admin=self)
         media = self.media + adminForm.media
 
+        def get_prepopulated_fields_inline(inline, request):
+            # FIX for 1.3
+            if hasattr(inline, 'get_prepopulated_fields'):
+                prepopulated_fields = inline.get_prepopulated_fields(request)
+            else:
+                prepopulated_fields = inline.prepopulated_fields
+            return prepopulated_fields
+
         inline_admin_formsets = []
         for inline, formset in zip(self.get_inline_instances(request), formsets):
             fieldsets = list(inline.get_fieldsets(request))
             readonly = list(inline.get_readonly_fields(request))
-            prepopulated = dict(inline.get_prepopulated_fields(request))
+            prepopulated = dict(get_prepopulated_fields_inline(inline, request))
+            inline_kwargs = {}
+            # FIX for 1.3
+            if '1.4' in settings.DJANGO_VERSION:
+                inline_kwargs['model_admin'] = self
             inline_admin_formset = helpers.InlineAdminFormSet(inline, formset,
-                fieldsets, prepopulated, readonly, model_admin=self)
+                fieldsets, prepopulated, readonly, **inline_kwargs)
             inline_admin_formsets.append(inline_admin_formset)
             media = media + inline_admin_formset.media
 
