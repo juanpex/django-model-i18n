@@ -33,7 +33,7 @@ def setup_admin(master_model, translation_model, adminsite):
     options = get_options_base_fields(maclass)
 
     admintranslation_class = type('%sTranslationAdmin' % \
-            master_model.__name__, (TranslationModelAdmin,), options)
+            master_model.__name__, (TranslationModelAdmin, madmin.__class__), options)
 
     adminsite.unregister(master_model)
     adminsite.register(master_model, admintranslation_class)

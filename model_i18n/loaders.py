@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from os.path import dirname
+from os import path
 
 
 def autodiscover(module_name='translations'):
@@ -31,7 +31,7 @@ def autodiscover(module_name='translations'):
         if hasattr(app_module, '__path__'):
             app_path = app_module.__path__
         else:
-            app_path = dirname(app_module.__file__)
+            app_path = path.dirname(app_module.__file__)
 
         # Step 2: use imp.find_module to find the app's `module_name`. For some
         # reason imp.find_module raises ImportError if the app can't be found
@@ -46,12 +46,14 @@ def autodiscover(module_name='translations'):
         # If this has errors we want them to bubble up.
         import_module('.'.join([app, module_name]))
 
-    project_dir = dirname(import_module(settings.SETTINGS_MODULE).__file__)
+    project_dir = path.dirname(import_module(settings.SETTINGS_MODULE).__file__)
+    project_dir = path.abspath(project_dir)
+    project_folder = path.basename(project_dir)
     try:
         imp.find_module(module_name, [project_dir, ])
     except ImportError:
         return
-    import_module('.'.join(['test_project', module_name]))
+    import_module('.'.join([project_folder, module_name]))
 
 
 def autodiscover_admin(adminsite=None):

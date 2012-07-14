@@ -232,6 +232,10 @@ class TranslationModelAdmin(admin.ModelAdmin):
             prepopulated_fields = superadmin.get_prepopulated_fields(request, *args, **kwargs)
         else:
             prepopulated_fields = self.prepopulated_fields
+        translatable_fields = get_translation_opt(self.model, 'translatable_fields')
+        for k, v in prepopulated_fields.items():
+            if k not in translatable_fields or v not in translatable_fields:
+                prepopulated_fields.pop(k)
         return prepopulated_fields
 
     def get_inline_instances(self, request):
@@ -412,6 +416,10 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 prepopulated_fields = inline.get_prepopulated_fields(request)
             else:
                 prepopulated_fields = inline.prepopulated_fields
+            translatable_fields = get_translation_opt(inline.model, 'translatable_fields')
+            for k, v in prepopulated_fields.items():
+                if k not in translatable_fields or v not in translatable_fields:
+                    prepopulated_fields.pop(k)
             return prepopulated_fields
 
         inline_admin_formsets = []
