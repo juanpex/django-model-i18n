@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django import VERSION as DJANGO_VERSION
 from django.conf import settings
 from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
@@ -24,6 +25,10 @@ from django.utils.safestring import mark_safe
 from model_i18n.conf import CHANGE_TPL, CHANGE_TRANSLATION_TPL
 from model_i18n.decorators import autotranslate_view
 from model_i18n.utils import get_translation_opt
+
+
+def get_django_version():
+    return ".".join([str(v) for v in DJANGO_VERSION])
 
 
 csrf_protect_m = method_decorator(csrf_protect)
@@ -220,11 +225,11 @@ class TranslationModelAdmin(admin.ModelAdmin):
             }
             yield inline.get_formset(request, obj, **defaults)
 
-    def get_prepopulated_fields(self, request):
+    def get_prepopulated_fields(self, request, *args, **kwargs):
         # FIX for 1.3
         superadmin = super(TranslationModelAdmin, self)
         if hasattr(superadmin, 'get_prepopulated_fields'):
-            prepopulated_fields = superadmin.get_prepopulated_fields(request)
+            prepopulated_fields = superadmin.get_prepopulated_fields(request, *args, **kwargs)
         else:
             prepopulated_fields = self.prepopulated_fields
         return prepopulated_fields
@@ -416,7 +421,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
             prepopulated = dict(get_prepopulated_fields_inline(inline, request))
             inline_kwargs = {}
             # FIX for 1.3
-            if '1.4' in settings.DJANGO_VERSION:
+            if '1.4' in get_django_version():
                 inline_kwargs['model_admin'] = self
             inline_admin_formset = helpers.InlineAdminFormSet(inline, formset,
                 fieldsets, prepopulated, readonly, **inline_kwargs)
