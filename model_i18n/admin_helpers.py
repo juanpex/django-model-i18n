@@ -245,9 +245,15 @@ class TranslationModelAdmin(admin.ModelAdmin):
             inline_instances = superadmin.get_inline_instances(request)
         else:
             inline_instances = self.inline_instances
-        return [inline for inline in \
-        inline_instances if inline.model in \
-        [i18n_inline.model for i18n_inline in self.i18n_inlines]]
+        inline_i18n_models = dict([(i18n_inline.model, i18n_inline) for i18n_inline in self.i18n_inlines])
+        instances = []
+        for inline in inline_instances:
+            if inline.model in inline_i18n_models:
+                if 'i18n/admin/edit_inline.html' != inline.template:
+                    inline.base_template = unicode(inline.template)
+                    inline.template = 'i18n/admin/edit_inline.html'
+                instances.append(inline)
+        return instances
 
     def get_form(self, request, obj=None, **kw):
         if self.lang:
@@ -395,7 +401,6 @@ class TranslationModelAdmin(admin.ModelAdmin):
             for FormSet, inline in \
                 zip(self.get_formsets(request, Tobj._master), \
                     self.get_inline_instances(request)):
-
                 prefix = FormSet.get_default_prefix()
                 prefixes[prefix] = prefixes.get(prefix, 0) + 1
                 if prefixes[prefix] != 1:

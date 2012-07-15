@@ -55,6 +55,22 @@ def autodiscover(module_name='translations'):
         return
     import_module('.'.join([project_folder, module_name]))
 
+    from model_i18n import translator
+    from model_i18n.conf import TRANSLATED_APP_MODELS
+    from django.core.exceptions import ImproperlyConfigured
+
+    for app_path in TRANSLATED_APP_MODELS:
+        model_conf = TRANSLATED_APP_MODELS[app_path]
+        for model_name in model_conf:
+            model_module = import_module(app_path + '.models')
+            try:
+                django_model = getattr(model_module, model_name)
+            except:
+                raise ImproperlyConfigured("Model %s does not exist on %s" % \
+                    (model_name, app_path))
+            if django_model not in translator._translator._registry:
+                translator.register(django_model, **model_conf[model_name])
+
 
 def autodiscover_admin(adminsite=None):
     if not adminsite:

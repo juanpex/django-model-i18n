@@ -47,12 +47,11 @@ def setup_admin(master_model, translation_model, adminsite):
     for i in madmin.inlines:
         if i.model in [t.model for t in trans_inlines]:
             inline_base_class = i.__bases__[0]
-            inline_base_class.base_template = inline_base_class.template
-            inline_base_class.template = 'i18n/admin/edit_inline.html'
-            iac = type("%sTranslator" % (i.__name__), (inline_base_class,), {})
-            inline_admin_class = iac
-            inline_admin_class.model = i.model
-            maclass.i18n_inlines.append(inline_admin_class)
+            options = {
+                'model': i.model
+            }
+            iac = type("%sTranslator" % (i.__name__), (inline_base_class,), options)
+            maclass.i18n_inlines.append(iac)
 
     for iclass in maclass.i18n_inlines:
         inline_instance = iclass(master_model._translation_model, adminsite)
