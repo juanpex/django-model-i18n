@@ -1,8 +1,8 @@
 =================
-django-model-i18n
+djmodeli18n
 =================
 
-django-model-i18n is a django application that tries to make multilingual data in models less painful.
+djmodeli18n is a django application that tries to make multilingual data in models less painful.
 
 The main features/goals are:
 
