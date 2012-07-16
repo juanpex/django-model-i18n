@@ -70,5 +70,11 @@ def ensure_models(**kwargs):
     from model_i18n import loaders
     loaders.autodiscover()
 
-ensure_models()
-# signals.class_prepared.connect(ensure_models)
+
+if hasattr(signals, 'installed_apps_loaded'):
+    def installed_apps_loaded(**kwargs):
+        ensure_models()
+
+    signals.installed_apps_loaded.connect(installed_apps_loaded)
+else:
+    ensure_models()

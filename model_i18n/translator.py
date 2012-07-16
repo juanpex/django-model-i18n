@@ -54,11 +54,10 @@ class Translator(object):
             validate(translation_class, master_model)
 
         transmanager_class = type('%sTransManager' % master_model.__name__, (TransManager, master_model.objects.__class__,), {})
-        livetransmanager_class = transmanager_class
         try:
             livetransmanager_class = type('%sLiveTransManager' % master_model.__name__, (TransManager, master_model.live_objects.__class__,), {})
         except:
-            pass
+            livetransmanager_class = type('%sLiveTransManager' % master_model.__name__, (TransManager, master_model.objects.__class__,), {})
 
         master_model.add_to_class('_default_manager', TransManager())
         master_model.add_to_class('_base_manager', TransManager())

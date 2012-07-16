@@ -51,9 +51,9 @@ def autodiscover(module_name='translations'):
     project_folder = path.basename(project_dir)
     try:
         imp.find_module(module_name, [project_dir, ])
+        import_module('.'.join([project_folder, module_name]))
     except ImportError:
-        return
-    import_module('.'.join([project_folder, module_name]))
+        pass
 
     from model_i18n import translator
     from model_i18n.conf import TRANSLATED_APP_MODELS
