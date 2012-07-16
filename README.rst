@@ -1,8 +1,8 @@
 =================
-djmodeli18n
+django-model-i18n
 =================
 
-djmodeli18n is a django application that tries to make multilingual data in models less painful.
+django-model-i18n is a django application that tries to make multilingual data in models less painful.
 
 The main features/goals are:
 
@@ -117,7 +117,3 @@ Deleting
 Code::
 
     Item.objects.set_language("fr").filter(translations__title__contains='titres à éliminer').delete()
-
-
-
-
