@@ -21,11 +21,14 @@ setup(
     description="""django-model-i18n is a django application that tries to make multilingual data in models less painful.""",
     long_description=read(os.path.join(os.path.dirname(__file__), 'README.rst')),
     packages=find_packages(),
-    include_package_data=True,
     zip_safe=False,
+    include_package_data=True,
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Environment :: Web Environment',
         'Framework :: Django',
         'Intended Audience :: Developers',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
     ]
 )
