@@ -46,7 +46,8 @@ def autodiscover(module_name='translations'):
         # If this has errors we want them to bubble up.
         import_module('.'.join([app, module_name]))
 
-    project_dir = path.dirname(import_module(settings.SETTINGS_MODULE).__file__)
+    project_dir = path.dirname(import_module(
+        settings.SETTINGS_MODULE).__name__.split('.')[0])
     project_dir = path.abspath(project_dir)
     project_folder = path.basename(project_dir)
     try:
