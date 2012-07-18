@@ -17,7 +17,7 @@ read = lambda filepath: codecs.open(filepath, 'r', 'utf-8').read()
 setup(
     name="django-model-i18n",
     version="0.1",
-    url='https://github.com/gonz/django-model-i18n/',
+    url='https://github.com/juanpex/django-model-i18n/',
     description="""django-model-i18n is a django application that tries to make multilingual data in models less painful.""",
     long_description=read(os.path.join(os.path.dirname(__file__), 'README.rst')),
     packages=find_packages(),
