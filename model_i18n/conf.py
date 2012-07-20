@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.conf import settings
 # Translation model's common field default names.
 # If you want to get a field name for a specific translation model remember it
@@ -13,6 +12,8 @@ DEFAULT_MASTER_FIELD_NAME = \
 # Translation table suffix used when building the table name from master model
 # db_table
 TRANSLATION_TABLE_SUFFIX = 'translation'
+# filename to load in autodiscover
+TRANSLATION_FILENAMES = getattr(settings, 'TRANSLATION_FILENAMES', 'translations')
 
 # Master attributes are stored in backups attributes in the form
 # <attribute name>_<suffix>, ATTR_BACKUP_SUFFIX allows to define suffix used,
@@ -47,9 +48,17 @@ MODEL_I18N_DJANGO_ADMIN = getattr(settings, 'MODEL_I18N_DJANGO_ADMIN', True)
 DEFAULT_TRANS_MANAGER = getattr(settings, 'DEFAULT_TRANS_MANAGER', None)
 
 
+for k, v in locals().items():
+    if k == k.upper():
+        setattr(settings, k, v)
+
+
 # Do we have multidb support? (post r11952)
 try:
     from django.db import DEFAULT_DB_ALIAS
-    MULTIDB_SUPPORT = True
+    if DEFAULT_DB_ALIAS:
+        MULTIDB_SUPPORT = True
+    else:
+        MULTIDB_SUPPORT = False
 except ImportError:
     MULTIDB_SUPPORT = False

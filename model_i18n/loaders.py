@@ -2,7 +2,7 @@
 from os import path
 
 
-def autodiscover(module_name='translations'):
+def autodiscover(module_name=None):
     """
     Auto-discover translations.py files in installed app's directories, fail
     silently if not present. This forces an import on them to register any
@@ -13,7 +13,10 @@ def autodiscover(module_name='translations'):
 
     import imp
     from model_i18n.utils import import_module
-    from django.conf import settings
+    from model_i18n.conf import settings
+
+    if not module_name:
+        module_name = settings.TRANSLATION_FILENAMES or 'translations'
 
     for app in settings.INSTALLED_APPS:
         if app == 'model_i18n':
@@ -60,17 +63,18 @@ def autodiscover(module_name='translations'):
     from model_i18n.conf import TRANSLATED_APP_MODELS
     from django.core.exceptions import ImproperlyConfigured
 
-    for app_path in TRANSLATED_APP_MODELS:
-        model_conf = TRANSLATED_APP_MODELS[app_path]
-        for model_name in model_conf:
-            model_module = import_module(app_path + '.models')
-            try:
-                django_model = getattr(model_module, model_name)
-            except:
-                raise ImproperlyConfigured("Model %s does not exist on %s" % \
-                    (model_name, app_path))
-            if django_model not in translator._translator._registry:
-                translator.register(django_model, **model_conf[model_name])
+    if TRANSLATED_APP_MODELS:
+        for app_path in TRANSLATED_APP_MODELS:
+            model_conf = TRANSLATED_APP_MODELS[app_path]
+            for model_name in model_conf:
+                model_module = import_module(app_path + '.models')
+                try:
+                    django_model = getattr(model_module, model_name)
+                except:
+                    raise ImproperlyConfigured("Model %s does not exist on %s" % \
+                        (model_name, app_path))
+                if django_model not in translator._translator._registry:
+                    translator.register(django_model, **model_conf[model_name])
 
 
 def autodiscover_admin(adminsite=None):
