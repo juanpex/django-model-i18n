@@ -117,7 +117,3 @@ Deleting
 Code::
 
     Item.objects.set_language("fr").filter(translations__title__contains='titres à éliminer').delete()
-
-
-
-
