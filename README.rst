@@ -64,6 +64,9 @@ Usage
 
     translator.register(Item, ItemTranslation)
 
+
+    Don't forget to run a schema migration if necessary.
+
 Notes
 =====
 
