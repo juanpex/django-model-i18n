@@ -1,7 +1,7 @@
 =================
 django-model-i18n
 =================
-
+https://github.com/jfunez/django-model-i18n/pulls
 django-model-i18n is a django application that tries to make multilingual data in models less painful.
 
 The main features/goals are:
@@ -63,6 +63,9 @@ Usage
         fields = ('title',)
 
     translator.register(Item, ItemTranslation)
+
+
+3) Don't forget to run a schema migration if necessary.
 
 Notes
 =====
