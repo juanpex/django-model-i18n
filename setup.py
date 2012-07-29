@@ -19,7 +19,6 @@ setup(
     version="0.1",
     url='https://github.com/juanpex/django-model-i18n/',
     description="""django-model-i18n is a django application that tries to make multilingual data in models less painful.""",
-    long_description=read(os.path.join(os.path.dirname(__file__), 'README.rst')),
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
