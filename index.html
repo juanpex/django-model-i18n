@@ -1,0 +1,74 @@
+<h1 id="django-model-i18n">django-model-i18n</h1>
+<p>django-model-i18n is a django application that tries to make multilingual data in models less painful.</p>
+<p>The main features/goals are:</p>
+<ul>
+<li>Easy installation and integration. No data or schema migration pain.</li>
+<li>Each multilingual model stores it’s translations in a separate table, which from django is just a new model dynamically created, we call this model the translation model.</li>
+<li>You can add (or even drop) i18n support for a model at any time and you won’t need to migrate any data or affect the original model (we call this the master model) table definition. This allows you to develop your apps without thinking in the i18n part (you even can load data for the main language and you won’t need to migrate it) and when you are comfortable with it register the multilingual options and start working with the content translations.</li>
+<li>3rd party apps friendly. You can add i18n support to the existing models without modifying their definition at all (think in apps you can’t modify directly for example djago.contrib.flatpages).</li>
+</ul>
+<h1 id="installation">Installation</h1>
+<ul>
+<li>cloning repository</li>
+</ul>
+<h1 id="configuration">Configuration</h1>
+<p>Go to urls.py into root project directory and put this</p>
+<pre><code>from model_i18n import loaders
+
+loaders.autodiscover_admin()</code></pre>
+<p>also add <q>django.middleware.locale.LocaleMiddleware</q> into MIDDLEWARE_CLASSES::</p>
+<pre><code>MIDDLEWARE_CLASSES = (
+    &#39;django.middleware.common.CommonMiddleware&#39;,
+    &#39;django.contrib.sessions.middleware.SessionMiddleware&#39;,
+    ## IF CACHE MIDDLEWARE IS SETTING PUT HERE
+    &#39;django.middleware.locale.LocaleMiddleware&#39;,
+    &#39;django.middleware.csrf.CsrfViewMiddleware&#39;,
+    &#39;django.contrib.auth.middleware.AuthenticationMiddleware&#39;,
+    &#39;django.contrib.messages.middleware.MessageMiddleware&#39;,
+    &#39;django.contrib.flatpages.middleware.FlatpageFallbackMiddleware&#39;,
+)</code></pre>
+<p>and finally put in INSTALLED_APPS::</p>
+<pre><code>INSTALLED_APPS = (
+    &#39;model_i18n&#39;,
+    ...
+    &#39;django.contrib.admin&#39;,
+    ...
+)</code></pre>
+<p><strong>When putting model_i18n must be first in the list of INSTALLED_APPS.</strong></p>
+<h1 id="usage">Usage</h1>
+<ol type="1">
+<li>In the directory of the application create a translations.py</li>
+<li><p>Inside the file you need to register translations like this example::</p>
+<p>from model_i18n import translator from app.models import Item</p>
+<p>class ItemTranslation(translator.ModelTranslation): fields = (<q>title</q>,)</p>
+<p>translator.register(Item, ItemTranslation)</p></li>
+<li><p>Don’t forget to run a schema migration if necessary.</p></li>
+</ol>
+<h1 id="notes">Notes</h1>
+<p>If you will translate models that are into django.contrib.* such as flatpages you can create in your root project directory a file named translations.py and handle other third parties apps.models like this::</p>
+<pre><code>from model_i18n import translator
+from django.contrib.flatpages.models import FlatPage
+
+class FlatPageTranslation(translator.ModelTranslation):
+    fields = (&#39;title&#39;, &#39;content&#39;)
+
+translator.register(FlatPage, FlatPageTranslation)</code></pre>
+<p>and if you need use south you must use SOUTH_MIGRATION_MODULES setting like this::</p>
+<pre><code>SOUTH_MIGRATION_MODULES  = {
+        &#39;flatpages&#39;: &#39;migrations.flatpages&#39;
+    }</code></pre>
+<p>It has good integration with django.contib.admin. It automatically configures ModelAdmin and inlines that apply.</p>
+<h1 id="api-examples">API EXAMPLES</h1>
+<h2 id="filtering">Filtering</h2>
+<p>Code::</p>
+<pre><code>Item.objects.set_language(&quot;es&quot;).filter(translations__title__contains=&#39;sometext&#39;)
+items = Item.objects.filter(Q(translations___language=&#39;en&#39;) | Q(translations___language=&#39;es&#39;))
+
+items = items.exclude(category__name=&#39;stuff&#39;)
+items = items.filter(Q(title__icontains=&#39;book&#39;) | Q(translations__title__icontains=&#39;toy&#39;))</code></pre>
+<h2 id="updating">Updating</h2>
+<p>Code::</p>
+<p>Item.objects.set_language(<q>es</q>).filter(translations<strong>title</strong>contains=<q>sometext</q>).update(title=u’new text’)</p>
+<h2 id="deleting">Deleting</h2>
+<p>Code::</p>
+<pre><code>Item.objects.set_language(&quot;fr&quot;).filter(translations__title__contains=&#39;titres à éliminer&#39;).delete()</code></pre>
