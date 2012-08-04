@@ -21,3 +21,4 @@ dist
 *.pyo
 *.tmp*
 local_settings.py
+*.textile
