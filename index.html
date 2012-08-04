@@ -68,7 +68,7 @@ items = items.exclude(category__name=&#39;stuff&#39;)
 items = items.filter(Q(title__icontains=&#39;book&#39;) | Q(translations__title__icontains=&#39;toy&#39;))</code></pre>
 <h2 id="updating">Updating</h2>
 <p>Code::</p>
-<p>Item.objects.set_language(&quot;es&quot;).filter(translations<strong>title</strong>contains='sometext').update(title=u'new text')</p>
+<p>Item.objects.set_language(&quot;es&quot;).filter(translations__title__contains='sometext').update(title=u'new text')</p>
 <h2 id="deleting">Deleting</h2>
 <p>Code::</p>
 <pre><code>Item.objects.set_language(&quot;fr&quot;).filter(translations__title__contains=&#39;titres à éliminer&#39;).delete()</code></pre>
