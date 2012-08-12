@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-import inspect
-from threading import local
+VERSION = (0, 4, 1, 'alpha', 0)
 
-from django.db.models.manager import signals
+# Dynamically calculate the version based on VERSION tuple
+if len(VERSION) > 2 and VERSION[2] is not None:
+    if isinstance(VERSION[2], int):
+        str_version = "%s.%s.%s" % VERSION[:3]
+    else:
+        str_version = "%s.%s_%s" % VERSION[:3]
+else:
+    str_version = "%s.%s" % VERSION[:2]
 
-import patches
-
-
-VERSION = (0, 4, 0, 'alpha', 0)
-_active = local()
+__version__ = str_version
 
 
 def get_version():
@@ -22,6 +24,16 @@ def get_version():
         if VERSION[3] != 'final':
             version = '%s %s %s' % (version, VERSION[3], VERSION[4])
     return version
+
+
+import inspect
+from threading import local
+
+from django.db.models.manager import signals
+
+import patches
+
+_active = local()
 
 
 def get_do_autotrans():
