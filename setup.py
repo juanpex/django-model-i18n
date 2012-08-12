@@ -1,34 +1,47 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import codecs
-import os
-
-try:
-    from setuptools import setup, find_packages
-except ImportError:
-    import ez_setup
-    ez_setup.use_setuptools()
-    from setuptools import setup, find_packages
+from os.path import join, dirname
+from setuptools import setup
 
 
-read = lambda filepath: codecs.open(filepath, 'r', 'utf-8').read()
+version = __import__('model_i18n').__version__
 
 
-setup(
-    name="django-model-i18n",
-    version="0.1",
-    url='https://github.com/juanpex/django-model-i18n/',
-    description="""django-model-i18n is a django application that tries to make multilingual data in models less painful.""",
-    long_description=read(os.path.join(os.path.dirname(__file__), 'README.rst')),
-    packages=find_packages(),
-    zip_safe=False,
-    include_package_data=True,
-    classifiers=[
-        'Environment :: Web Environment',
-        'Framework :: Django',
-        'Intended Audience :: Developers',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-    ]
-)
+LONG_DESCRIPTION = """
+django-model-i18n
+===================
+
+django-model-i18n is a django application that tries to make multilingual data in models less painful.
+
+    $ git clone git://github.com/juanpex/django-model-i18n.git
+"""
+
+
+def long_description():
+    try:
+        return open(join(dirname(__file__), 'README.md')).read()
+    except IOError:
+        return LONG_DESCRIPTION
+
+
+setup(name='django-model-report',
+      version=version,
+      author='juanpex',
+      author_email='jpma55@gmail.com',
+      description='django-model-i18n is a django application that tries to make multilingual data in models less painful.',
+      license='BSD',
+      keywords='django, model, i18n, translation, translations, python, pluggable',
+      url='https://github.com/juanpex/django-model-report',
+      packages=['model_i18n', ],
+      package_data={'model_i18n': ['locale/*/LC_MESSAGES/*']},
+      long_description=long_description(),
+      install_requires=['django>=1.3', ],
+      classifiers=['Framework :: Django',
+                   'Development Status :: 3 - Alpha',
+                   'Topic :: Internet',
+                   'License :: OSI Approved :: BSD License',
+                   'Intended Audience :: Developers',
+                   'Environment :: Web Environment',
+                   'Programming Language :: Python :: 2.5',
+                   'Programming Language :: Python :: 2.6',
+                   'Programming Language :: Python :: 2.7'])
