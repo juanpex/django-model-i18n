@@ -1,4 +1,3 @@
-=================
 django-model-i18n
 =================
 
@@ -64,6 +63,9 @@ Usage
 
     translator.register(Item, ItemTranslation)
 
+
+3) Don't forget to run a schema migration if necessary.
+
 Notes
 =====
 
@@ -117,3 +119,4 @@ Deleting
 Code::
 
     Item.objects.set_language("fr").filter(translations__title__contains='titres à éliminer').delete()
+

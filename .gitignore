@@ -21,4 +21,4 @@ dist
 *.pyo
 *.tmp*
 local_settings.py
-django
+*.textile
