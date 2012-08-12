@@ -26,12 +26,31 @@ def get_version():
     return version
 
 
+def ensure_models(**kwargs):
+    stack = inspect.stack()
+    for stack_info in stack[1:]:
+        if '_load_conf' in stack_info[3]:
+            return
+    from model_i18n import loaders
+    loaders.autodiscover()
+
+
 import inspect
 from threading import local
 
-from django.db.models.manager import signals
+try:
+    from django.db.models.manager import signals
+    import patches
 
-import patches
+    if hasattr(signals, 'installed_apps_loaded'):
+        def installed_apps_loaded(**kwargs):
+            ensure_models()
+
+        signals.installed_apps_loaded.connect(installed_apps_loaded)
+    else:
+        ensure_models()
+except:
+    pass
 
 _active = local()
 
@@ -42,21 +61,3 @@ def get_do_autotrans():
 
 def set_do_autotrans(v):
     _active.value = v
-
-
-def ensure_models(**kwargs):
-    stack = inspect.stack()
-    for stack_info in stack[1:]:
-        if '_load_conf' in stack_info[3]:
-            return
-    from model_i18n import loaders
-    loaders.autodiscover()
-
-
-if hasattr(signals, 'installed_apps_loaded'):
-    def installed_apps_loaded(**kwargs):
-        ensure_models()
-
-    signals.installed_apps_loaded.connect(installed_apps_loaded)
-else:
-    ensure_models()
