@@ -24,14 +24,14 @@ def long_description():
         return LONG_DESCRIPTION
 
 
-setup(name='django-model-report',
+setup(name='django-model-i18n',
       version=version,
       author='juanpex',
       author_email='jpma55@gmail.com',
       description='django-model-i18n is a django application that tries to make multilingual data in models less painful.',
       license='BSD',
       keywords='django, model, i18n, translation, translations, python, pluggable',
-      url='https://github.com/juanpex/django-model-report',
+      url='https://github.com/juanpex/django-model-i18n',
       packages=['model_i18n', ],
       package_data={'model_i18n': ['locale/*/LC_MESSAGES/*']},
       long_description=long_description(),
