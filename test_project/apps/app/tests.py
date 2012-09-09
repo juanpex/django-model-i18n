@@ -52,6 +52,7 @@ class TestTransQueryCase(TestCase):
         self.assertEquals(queryset.count(), 1)
         obj = queryset[0]
         testObject(self.assertEquals, obj, itemValue1)
+        self.assertEquals(queryset.update(title='Title updated'), 1)
 
     def testUpdateTranslations(self):
         obj = Item.objects.all()[0]
