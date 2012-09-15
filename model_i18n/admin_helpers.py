@@ -217,6 +217,8 @@ class TranslationModelAdmin(admin.ModelAdmin):
 
     def get_i18n_formsets(self, request, obj=None):
         for inline in self.get_inline_instances(request):
+            if not hasattr(inline.model, '_translation_model'):
+                continue
             defaults = {
                 'can_delete': False,
                 'extra': 0,
@@ -429,6 +431,8 @@ class TranslationModelAdmin(admin.ModelAdmin):
 
         inline_admin_formsets = []
         for inline, formset in zip(self.get_inline_instances(request), formsets):
+            if not hasattr(inline.model, '_translation_model'):
+                continue
             fieldsets = list(inline.get_fieldsets(request))
             readonly = list(inline.get_readonly_fields(request))
             prepopulated = dict(get_prepopulated_fields_inline(inline, request))
