@@ -3,6 +3,7 @@ from os import path
 
 
 def autodiscover(module_name=None):
+
     """
     Auto-discover translations.py files in installed app's directories, fail
     silently if not present. This forces an import on them to register any
@@ -40,20 +41,19 @@ def autodiscover(module_name=None):
         # reason imp.find_module raises ImportError if the app can't be found
         # but doesn't actually try to import the module. So skip this app if
         # its `module_name` doesn't exist
+
         try:
             imp.find_module(module_name, app_path)
         except ImportError:
             continue
-
         # Step 3: import the app's translation file.
         # If this has errors we want them to bubble up.
         import_module('.'.join([app, module_name]))
 
-    project_dir = path.dirname(import_module(
-        settings.SETTINGS_MODULE).__name__.split('.')[0])
-    project_dir = path.abspath(project_dir)
+    project_dir = path.dirname(import_module(settings.SETTINGS_MODULE).__file__)
     project_folder = path.basename(project_dir)
     try:
+
         imp.find_module(module_name, [project_dir, ])
         import_module('.'.join([project_folder, module_name]))
     except ImportError:

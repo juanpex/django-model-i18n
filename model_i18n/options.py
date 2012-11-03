@@ -2,7 +2,11 @@
 from django.conf import settings
 
 from model_i18n.conf import DEFAULT_LANGUAGE_FIELD_NAME, RELATED_NAME, \
-                            DEFAULT_MASTER_FIELD_NAME, TRANSLATION_TABLE_SUFFIX
+    DEFAULT_MASTER_FIELD_NAME, TRANSLATION_TABLE_SUFFIX
+
+MODEL_I18N_MASTER_LANGUAGE = getattr(settings, 'MODEL_I18N_MASTER_LANGUAGE', settings.LANGUAGE_CODE)
+if MODEL_I18N_MASTER_LANGUAGE not in dict(settings.LANGUAGES):
+    MODEL_I18N_MASTER_LANGUAGE = MODEL_I18N_MASTER_LANGUAGE.split('-')[0]
 
 
 class ModelTranslation(object):
@@ -52,7 +56,7 @@ class ModelTranslation(object):
 
     # language
     default_language = 'active'
-    master_language = settings.MODEL_I18N_MASTER_LANGUAGE
+    master_language = MODEL_I18N_MASTER_LANGUAGE
 
     # table
     db_table = None
@@ -67,5 +71,5 @@ class ModelTranslation(object):
         # Default db_table
         if self.db_table is None:
             self.db_table = '_'.join([model._meta.db_table,
-                                       TRANSLATION_TABLE_SUFFIX])
+                                      TRANSLATION_TABLE_SUFFIX])
         super(ModelTranslation, self).__init__()

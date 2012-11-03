@@ -10,7 +10,7 @@ from model_i18n import managers
 from django.db import transaction
 
 from model_i18n.conf import CURRENT_LANGUAGES, CURRENT_LANGUAGE, \
-     ATTR_BACKUP_SUFFIX, MODEL_I18N_DJANGO_ADMIN
+    ATTR_BACKUP_SUFFIX, MODEL_I18N_DJANGO_ADMIN
 from model_i18n.exceptions import AlreadyRegistered
 from model_i18n.managers import TransManager
 from model_i18n.options import ModelTranslation
@@ -18,6 +18,11 @@ from model_i18n.utils import import_module, get_translation_opt
 
 
 __all__ = ['register', 'ModelTranslation']
+
+
+MODEL_I18N_MASTER_LANGUAGE = getattr(settings, 'MODEL_I18N_MASTER_LANGUAGE', settings.LANGUAGE_CODE)
+if MODEL_I18N_MASTER_LANGUAGE not in dict(settings.LANGUAGES):
+    MODEL_I18N_MASTER_LANGUAGE = MODEL_I18N_MASTER_LANGUAGE.split('-')[0]
 
 
 class Translator(object):
@@ -45,8 +50,8 @@ class Translator(object):
         # If we got **options then dynamically construct a
         # subclass of translation_class with those **options.
         if options:
-            translation_class = type('%sTranslation' % \
-            master_model.__name__, (translation_class,), options)
+            translation_class = type('%sTranslation' %
+                                     master_model.__name__, (translation_class,), options)
 
         # Validate the translation_class (just in debug mode).
         if settings.DEBUG:
@@ -88,7 +93,7 @@ class Translator(object):
         if opts.master_language not in dict(settings.LANGUAGES):
             from model_i18n.exceptions import OptionWarning
             msg = '\nCode language "%s" not exist: Avaible languages are: %s.\n The model %s take master languages "%s"' % \
-            (opts.master_language, " ".join(dict(settings.LANGUAGES).keys()), master_model.__name__, settings.MODEL_I18N_MASTER_LANGUAGE)
+                (opts.master_language, " ".join(dict(settings.LANGUAGES).keys()), master_model.__name__, MODEL_I18N_MASTER_LANGUAGE)
             print OptionWarning(msg)
 
         # creates unique_together for master_model
@@ -128,13 +133,13 @@ class Translator(object):
 
             # Translation language
             opts.language_field_name: models.CharField(db_index=True,
-                verbose_name=_('language'), max_length=10,
-                choices=settings.LANGUAGES),
+                                                       verbose_name=_('language'), max_length=10,
+                                                       choices=settings.LANGUAGES),
 
             # Master instance FK
-            opts.master_field_name: models.ForeignKey(master_model, \
-                db_index=True, verbose_name=_('master'), \
-                related_name=opts.related_name),
+            opts.master_field_name: models.ForeignKey(master_model,
+                                                      db_index=True, verbose_name=_('master'),
+                                                      related_name=opts.related_name),
         }
         attrs.update(common_fields)
 
@@ -148,7 +153,7 @@ class Translator(object):
                     conflicts with the language or master FK common \
                     fields, try changing language_field_name or \
                     master_field_name ModelTranslation option.'
-                    % (model_name, master_model.__name__, field.attname))
+                                           % (model_name, master_model.__name__, field.attname))
             newfield = copy.copy(field)
             newfield.primary_key = False
 
@@ -183,7 +188,7 @@ def trans_save(method):
         delete = kwargs.pop('delete', False)
         if hasattr(self, 'current_language'):
             if self.current_language \
-            and self.current_language != self.i18n_default_language:
+                    and self.current_language != self.i18n_default_language:
                 obj = i18n_save(obj, self.current_language, values, delete)
         else:
             obj = method(self, *args, **kwargs)
