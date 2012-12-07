@@ -3,6 +3,11 @@ from os.path import abspath, dirname, join
 import django
 import sys
 
+PROJECT_DIR = dirname(abspath(__file__))
+sys.path.append(PROJECT_DIR)
+sys.path.append(join(PROJECT_DIR, '..'))
+sys.path.append(join(PROJECT_DIR, 'apps'))
+
 LANGUAGES = (
   ('en', 'English'),
   ('es', 'Español'),
@@ -14,11 +19,7 @@ LANGUAGE_CODE = 'en'
 
 MODEL_I18N_CONF = 'test_project.i18n_conf'
 MODEL_I18N_MASTER_LANGUAGE = LANGUAGE_CODE
-
-PROJECT_DIR = dirname(abspath(__file__))
-sys.path.append(PROJECT_DIR)
-sys.path.append(join(PROJECT_DIR, '..'))
-sys.path.append(join(PROJECT_DIR, 'apps'))
+MODEL_I18N_SETTINGS_PATH = PROJECT_DIR
 
 
 SOUTH_TESTS_MIGRATE = False

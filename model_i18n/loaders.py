@@ -50,7 +50,10 @@ def autodiscover(module_name=None):
         # If this has errors we want them to bubble up.
         import_module('.'.join([app, module_name]))
 
-    project_dir = path.dirname(import_module(settings.SETTINGS_MODULE).__file__)
+    if settings.MODEL_I18N_SETTINGS_PATH:
+        project_dir = settings.MODEL_I18N_SETTINGS_PATH
+    else:
+        project_dir = path.dirname(import_module(settings.SETTINGS_MODULE).__file__)
     project_folder = path.basename(project_dir)
     try:
 
