@@ -6,25 +6,31 @@ django-model-i18n is a django application that tries to make multilingual data i
 The main features/goals are:
 
 * Easy installation and integration. No data or schema migration pain.
-* Each multilingual model stores it's translations in a separate table, which from django is just a new model dynamically created, we call this model the translation model.
-* You can add (or even drop) i18n support for a model at any time and you won't need to migrate any data or affect the original model (we call this the master model) table definition. This allows you to develop your apps without thinking in the i18n part (you even can load data for the main language and you won't need to migrate it) and when you are comfortable with it register the multilingual options and start working with the content translations.
+* Each multilingual model stores its translations in a separate table, which from django is just a new model dynamically created, we call this model the translation model.
+* You can add (or even drop) i18n support for a model at any time and you won't need to migrate any data or affect the original model (we call this the master model) table definition. This allows you to develop your apps without thinking about i18n (you even can load data for the main language and you won't need to migrate it) and when you are comfortable with it register the multilingual options and start working with the content translations.
 * 3rd party apps friendly. You can add i18n support to the existing models without modifying their definition at all (think in apps you can't modify directly for example djago.contrib.flatpages).
 
 Installation
 ===========
 
-* cloning repository
+Clone the git repository::
+
+    git clone https://github.com/juanpex/django-model-i18n.git
+
+or install with pip::
+
+    pip install git+https://github.com/juanpex/django-model-i18n.git#egg=django-model-i18n
 
 Configuration
 =============
 
-Go to urls.py into root project directory and put this
+Add ``model_i18n`` admin loaders to your root project ``urls.py``::
 
     from model_i18n import loaders
 
     loaders.autodiscover_admin()
 
-also add 'django.middleware.locale.LocaleMiddleware' into MIDDLEWARE_CLASSES::
+and add ``'django.middleware.locale.LocaleMiddleware'`` into ``MIDDLEWARE_CLASSES``::
 
     MIDDLEWARE_CLASSES = (
         'django.middleware.common.CommonMiddleware',
@@ -37,7 +43,7 @@ also add 'django.middleware.locale.LocaleMiddleware' into MIDDLEWARE_CLASSES::
         'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     )
 
-and finally put in INSTALLED_APPS::
+and finally add ``model_i18n`` **as the first item** of ``INSTALLED_APPS``::
 
     INSTALLED_APPS = (
         'model_i18n',
@@ -46,32 +52,28 @@ and finally put in INSTALLED_APPS::
         ...
     )
 
-**When putting model_i18n must be first in the list of INSTALLED_APPS.**
-
 
 Usage
 =====
 
-1) In the directory of the application create a translations.py
-2) Inside the file you need to register translations like this example::
+1) Create a ``translations.py`` in each app directory where you want to use ``model_i18n``
+2) Register translations per-model::
 
     from model_i18n import translator
-    from app.models import Item
+    from .models import Poll
 
-    class ItemTranslation(translator.ModelTranslation):
+    class PollTranslation(translator.ModelTranslation):
         fields = ('title',)
 
-    translator.register(Item, ItemTranslation)
+    translator.register(Poll, PollTranslation)
 
 
-3) Don't forget to run a schema migration if necessary.
+3) Don't forget to update the database: a new ``schemamigration`` if you're using South, or ``syncdb`` if not.
 
 Notes
 =====
 
-If you will translate models that are into django.contrib.* such as flatpages
-you can create in your root project directory a file named translations.py and handle
-other third parties apps.models like this::
+If you want to translate models that are in ``django.contrib.*``, *e.g.* flatpages, you can create a ``translations.py`` in your root project directory and register them like this::
     
     from model_i18n import translator
     from django.contrib.flatpages.models import FlatPage
@@ -82,14 +84,14 @@ other third parties apps.models like this::
     translator.register(FlatPage, FlatPageTranslation)
 
 
-and if you need use south you must use SOUTH_MIGRATION_MODULES setting like this::
+and if you use south, you must also set the ``SOUTH_MIGRATION_MODULES`` setting to pick up this change::
 
     SOUTH_MIGRATION_MODULES  = {
-            'flatpages': 'migrations.flatpages'
-        }
+        'flatpages': 'migrations.flatpages'
+    }
 
 
-It has good integration with django.contib.admin. It automatically configures ModelAdmin and inlines that apply.
+``django_i18n`` has good integration with `django.contib.admin`; it automatically configures ``ModelAdmin`` and inlines that apply.
 
 API EXAMPLES
 ============
@@ -97,7 +99,7 @@ API EXAMPLES
 Filtering
 ---------
 
-Code::
+::
 
     Item.objects.set_language("es").filter(translations__title__contains='sometext')
     items = Item.objects.filter(Q(translations___language='en') | Q(translations___language='es'))
@@ -108,15 +110,14 @@ Code::
 
 Updating
 ---------
-   
-Code::
+
+::
 
    Item.objects.set_language("es").filter(translations__title__contains='sometext').update(title=u'new text')
 
 Deleting
 ---------
 
-Code::
+::
 
     Item.objects.set_language("fr").filter(translations__title__contains='titres à éliminer').delete()
-
