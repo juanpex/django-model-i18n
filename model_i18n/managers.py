@@ -7,7 +7,12 @@ from django.utils.translation import get_language
 
 from model_i18n.query import TransQuerySet
 from model_i18n.conf import MULTIDB_SUPPORT, DEFAULT_TRANS_MANAGER
-from model_i18n import get_do_autotrans
+
+
+
+def get_do_autotrans():
+    from model_i18n import _active
+    return getattr(_active, "value", True)
 
 
 try:

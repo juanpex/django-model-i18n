@@ -192,12 +192,19 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 if field not in fields:
                     self.form.declared_fields.pop(field)
         formfield_callback = curry(self.formfield_for_dbfield, request=request)
+        newfields = []
+        for f in list(fields):
+            fi = self.model._meta.get_field_by_name(f)[0]
+            if fi.editable:
+                newfields.append(f)
+        fields = newfields
         defaults = {
             "form": self.form,
             "fields": fields,
             "exclude": exclude,
             "formfield_callback": formfield_callback,
         }
+
         defaults.update(kwargs)
         f = modelform_factory(self.Tmodel, **defaults)
         f.clean = lambda s: s.cleaned_data
@@ -217,8 +224,6 @@ class TranslationModelAdmin(admin.ModelAdmin):
 
     def get_i18n_formsets(self, request, obj=None):
         for inline in self.get_inline_instances(request):
-            if not hasattr(inline.model, '_translation_model'):
-                continue
             defaults = {
                 'can_delete': False,
                 'extra': 0,
@@ -240,11 +245,11 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 prepopulated_fields.pop(k)
         return prepopulated_fields
 
-    def get_inline_instances(self, request):
+    def get_inline_instances(self, request, obj=None):
         # FIX for 1.3
         superadmin = super(TranslationModelAdmin, self)
         if hasattr(superadmin, 'get_inline_instances'):
-            inline_instances = superadmin.get_inline_instances(request)
+            inline_instances = superadmin.get_inline_instances(request, obj)
         else:
             inline_instances = self.inline_instances
         inline_i18n_models = dict([(i18n_inline.model, i18n_inline) for i18n_inline in self.i18n_inlines])
@@ -431,8 +436,6 @@ class TranslationModelAdmin(admin.ModelAdmin):
 
         inline_admin_formsets = []
         for inline, formset in zip(self.get_inline_instances(request), formsets):
-            if not hasattr(inline.model, '_translation_model'):
-                continue
             fieldsets = list(inline.get_fieldsets(request))
             readonly = list(inline.get_readonly_fields(request))
             prepopulated = dict(get_prepopulated_fields_inline(inline, request))

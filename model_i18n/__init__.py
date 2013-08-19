@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import inspect
-from threading import local
-
 VERSION = (0, 4, 2, 'alpha', 0)
 
 # Dynamically calculate the version based on VERSION tuple
@@ -14,16 +11,6 @@ else:
     str_version = "%s.%s" % VERSION[:2]
 
 __version__ = str_version
-
-_active = local()
-
-
-def get_do_autotrans():
-    return getattr(_active, "value", True)
-
-
-def set_do_autotrans(v):
-    _active.value = v
 
 
 def get_version():
@@ -48,6 +35,9 @@ def ensure_models(**kwargs):
     loaders.autodiscover()
 
 
+import inspect
+from threading import local
+
 try:
     from django.db.models.manager import signals
     import patches
@@ -61,3 +51,13 @@ try:
         ensure_models()
 except:
     pass
+
+_active = local()
+
+
+def get_do_autotrans():
+    return getattr(_active, "value", True)
+
+
+def set_do_autotrans(v):
+    _active.value = v

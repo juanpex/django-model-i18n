@@ -47,8 +47,6 @@ MODEL_I18N_DJANGO_ADMIN = getattr(settings, 'MODEL_I18N_DJANGO_ADMIN', True)
 
 DEFAULT_TRANS_MANAGER = getattr(settings, 'DEFAULT_TRANS_MANAGER', None)
 
-# project path to import translations by project
-MODEL_I18N_SETTINGS_PATH = getattr(settings, 'MODEL_I18N_SETTINGS_PATH', None)
 
 for k, v in locals().items():
     if k == k.upper():
@@ -64,6 +62,3 @@ try:
         MULTIDB_SUPPORT = False
 except ImportError:
     MULTIDB_SUPPORT = False
-
-
-
