@@ -223,7 +223,10 @@ class TranslationModelAdmin(admin.ModelAdmin):
         return super(TranslationModelAdmin, self).get_fieldsets(request, obj)
 
     def get_i18n_formsets(self, request, obj=None):
+
         for inline in self.get_inline_instances(request):
+            if not hasattr(inline.model, '_translation_model'):
+                continue
             defaults = {
                 'can_delete': False,
                 'extra': 0,
