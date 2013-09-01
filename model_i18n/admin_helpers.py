@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django import VERSION as DJANGO_VERSION
 from django.conf import settings
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.admin.util import unquote
