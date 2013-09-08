@@ -23,6 +23,31 @@ def long_description():
     except IOError:
         return LONG_DESCRIPTION
 
+# Compile the list of packages available, because distutils doesn't have
+# an easy way to do this.
+packages, package_data = [], {}
+
+root_dir = os.path.dirname(__file__)
+if root_dir != '':
+    os.chdir(root_dir)
+django_dir = 'model_i18n'
+
+for dirpath, dirnames, filenames in os.walk(django_dir):
+    # Ignore PEP 3147 cache dirs and those whose names start with '.'
+    dirnames[:] = [d for d in dirnames if not d.startswith('.') and d != '__pycache__']
+    parts = fullsplit(dirpath)
+    package_name = '.'.join(parts)
+    if '__init__.py' in filenames and is_package(package_name):
+        packages.append(package_name)
+    elif filenames:
+        relative_path = []
+        while '.'.join(parts) not in packages:
+            relative_path.append(parts.pop())
+        relative_path.reverse()
+        path = os.path.join(*relative_path)
+        package_files = package_data.setdefault('.'.join(parts), [])
+        package_files.extend([os.path.join(path, f) for f in filenames])
+
 
 setup(name='django-model-i18n',
       version=version,
@@ -33,8 +58,8 @@ setup(name='django-model-i18n',
       license='BSD',
       keywords='django, model, i18n, translation, translations, python, pluggable',
       url='https://github.com/juanpex/django-model-i18n',
-      packages=['model_i18n', ],
-      package_data={'model_i18n': ['locale/*/LC_MESSAGES/*']},
+      packages=packages,
+      package_data=package_data,
       long_description=long_description(),
       install_requires=['django>=1.3', ],
       classifiers=['Framework :: Django',

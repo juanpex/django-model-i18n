@@ -43,6 +43,12 @@ INSTALLED_APPS = (
     'app',
 )
 
+try:
+    import django_extensions
+    INSTALLED_APPS += ('django_extensions',)
+except Exception, e:
+    raise e
+
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

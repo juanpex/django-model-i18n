@@ -75,9 +75,6 @@ class Translator(object):
         # using translation_class options
         tmodel = self.create_translation_model(master_model, opts)
         tmodel.__unicode__ = lambda s: unicode(getattr(s, s._transmeta.master_field_name))
-        defaults = {'blank': True, 'null': True, 'editable': False, 'related_name': '%(app_label)s_%(class)s_related'}
-        m2mfield = models.ManyToManyField(tmodel, **defaults)
-        master_model.add_to_class("translations", m2mfield)
 
         # This probably will become a class method soon.
         self.setup_master_model(master_model, tmodel)

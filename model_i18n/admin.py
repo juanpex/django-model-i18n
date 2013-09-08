@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 import warnings
 
-from django.conf.urls.defaults import patterns, url
+try:
+    from django.conf.urls.defaults import patterns, url
+except ImportError:
+    from django.conf.urls import patterns, url
+
 
 from model_i18n.conf import CHANGE_TPL
 from model_i18n.exceptions import OptionWarning
