@@ -2,7 +2,7 @@
 <body>
 
 {% for lang in LANGUAGES %}
-<a style="color:{% ifequal lang.0 LANGUAGE_CODE %}red{% else %}black{% endifequal %};" href="{% url setlang %}?language={{ lang.0 }}">{{ lang.1 }}</a>
+<a style="color:{% ifequal lang.0 LANGUAGE_CODE %}red{% else %}black{% endifequal %};" href="{% url 'setlang' %}?language={{ lang.0 }}">{{ lang.1 }}</a>
 {% endfor %}
 
 {% if messages %}
