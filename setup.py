@@ -24,6 +24,20 @@ def long_description():
     except IOError:
         return LONG_DESCRIPTION
 
+def fullsplit(path, result=None):
+    """
+Split a pathname into components (the opposite of os.path.join)
+in a platform-neutral way.
+"""
+    if result is None:
+        result = []
+    head, tail = os.path.split(path)
+    if head == '':
+        return [tail] + result
+    if head == path:
+        return result
+    return fullsplit(head, [tail] + result)
+
 # Compile the list of packages available, because distutils doesn't have
 # an easy way to do this.
 packages, package_data = [], {}
@@ -38,7 +52,7 @@ for dirpath, dirnames, filenames in os.walk(django_dir):
     dirnames[:] = [d for d in dirnames if not d.startswith('.') and d != '__pycache__']
     parts = fullsplit(dirpath)
     package_name = '.'.join(parts)
-    if '__init__.py' in filenames and is_package(package_name):
+    if '__init__.py' in filenames:
         packages.append(package_name)
     elif filenames:
         relative_path = []
