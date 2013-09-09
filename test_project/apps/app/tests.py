@@ -122,6 +122,9 @@ class TestTransAdminCase(TestCase):
     def get_inputs_by_type(self, inputs, typename):
         return dict([(name, value) for name, (type, value) in inputs.items() if type == typename])
 
+    def get_inputs_by_name(self, inputs, inputname):
+        return dict([(name, value) for name, (type, value) in inputs.items() if inputname in name])
+
     def get_basic_inputs(self, inputs):
         basic_names = ('INITIAL_FORMS', 'MAX_NUM_FORMS', 'TOTAL_FORMS', 'csrfmiddlewaretoken')
         result = {}
@@ -136,6 +139,9 @@ class TestTransAdminCase(TestCase):
         hiddens = self.get_inputs_by_type(inputs, 'hidden')
         return self.get_basic_inputs(hiddens)
 
+    def get_inline_form_post(self, response):
+        inputs = self.get_inputs(response)
+        return self.get_inputs_by_name(inputs, 'items-0')
 
     def test_add_item_ok(self):
         self.assertEquals(Item.objects.count(), 0)
@@ -168,16 +174,61 @@ class TestTransAdminCase(TestCase):
         self.assertEquals(Item.objects.count(), 1)
         self.assertEquals(RelatedItem.objects.count(), 1)
 
-    # def test_add_item_ok_with_translation(self):
-    #     import pdb; pdb.set_trace()
-    #     self.test_add_item_ok()
-    #     response = self.client.get(reverse('admin:itemtranslation_add', args=['es']))
-    #     basic_post = self.get_basic_form_post(response)
-    #     post_data = {
-    #         'title': u'Test OK ES',
-    #         'content': u'Content OK ES',
-    #     }
-    #     post_data.update(basic_post)
-    #     response = self.client.post(reverse('admin:itemtranslation_add'), post_data)
-    #     self.assertRedirects(response, reverse('admin:app_item_changelist'))
-    #     self.assertEquals(Item.objects.count(), 1)
+    def test_add_item_ok_with_translation(self, language='es'):
+        self.test_add_item_ok()
+        itm = Item.objects.all()[0]
+        edit_url = reverse('admin:app_item_change', args=[itm.pk]) + language + '/'
+        response = self.client.get(edit_url)
+        basic_post = self.get_basic_form_post(response)
+        post_data = {
+            'title': u'Test OK %s' % language,
+            'content': u'Content OK %s' % language,
+        }
+        post_data.update(basic_post)
+        response = self.client.post(edit_url, post_data)
+        self.assertRedirects(response, reverse('admin:app_item_changelist'))
+        self.assertEquals(Item.objects.count(), 1)
+        trans_model = Item._translation_model
+        self.assertEquals(trans_model.objects.count(), 1)
+        trans_instance = trans_model.objects.all()[0]
+        self.assertEquals(trans_instance._master, itm)
+        self.assertEquals(trans_instance._language, language)
+        self.assertEquals(trans_instance.title, post_data['title'])
+        self.assertEquals(trans_instance.content, post_data['content'])
+
+    def test_add_item_ok_with_inlines_translation(self, language='fr'):
+        self.test_add_item_ok_with_inlines()
+        itm = Item.objects.all()[0]
+        edit_url = reverse('admin:app_item_change', args=[itm.pk]) + language + '/'
+        response = self.client.get(edit_url)
+        basic_post = self.get_basic_form_post(response)
+        inline_post = self.get_inline_form_post(response)
+        inline_post.update({'items-0-value': 10})
+        post_data = {
+            'title': u'Test OK %s' % language,
+            'content': u'Content OK %s' % language,
+        }
+        post_data.update(basic_post)
+        post_data.update(inline_post)
+        response = self.client.post(edit_url, post_data)
+        self.assertRedirects(response, reverse('admin:app_item_changelist'))
+
+        self.assertEquals(Item.objects.count(), 1)
+        trans_model = Item._translation_model
+        self.assertEquals(trans_model.objects.count(), 1)
+        trans_instance = trans_model.objects.all()[0]
+        self.assertEquals(trans_instance._master, itm)
+        self.assertEquals(trans_instance._language, language)
+        self.assertEquals(trans_instance.title, post_data['title'])
+        self.assertEquals(trans_instance.content, post_data['content'])
+
+        self.assertEquals(RelatedItem.objects.count(), 1)
+        transrel_model = RelatedItem._translation_model
+        self.assertEquals(transrel_model.objects.count(), 1)
+        relitem_instance = RelatedItem.objects.all()[0]
+        transrel_instance = transrel_model.objects.all()[0]
+        self.assertEquals(transrel_instance._master, relitem_instance)
+        self.assertEquals(transrel_instance._language, language)
+        self.assertEquals(transrel_instance.value, post_data['items-0-value'])
+
+
