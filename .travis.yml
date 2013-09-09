@@ -10,7 +10,8 @@ install:
   - pip install -q Django==$DJANGO_VERSION
   - pip install -r requirements.txt --use-mirrors
 script:
-  - cd test_project && django-admin.py test app --settings=settings
+  - cd test_project
+  - ./manage.py test app --settings=settings
 notifications:
   email:
     recipients:
