@@ -9,9 +9,9 @@ sys.path.append(join(PROJECT_DIR, '..'))
 sys.path.append(join(PROJECT_DIR, 'apps'))
 
 LANGUAGES = (
-  ('en', 'English'),
-  ('es', 'Español'),
-  ('fr', 'Français'),
+  ('en', u'English'),
+  ('es', u'Español'),
+  ('fr', u'Français'),
 )
 LANGUAGE_CODE = 'en'
 
