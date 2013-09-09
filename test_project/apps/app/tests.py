@@ -104,12 +104,7 @@ class TestTransAdminCase(TestCase):
 
         Item.objects.all().delete()
         RelatedItem.objects.all().delete()
-        # from django.contrib import admin
-        # admin.autodiscover()
-        # from model_i18n import loaders
-        # loaders.autodiscover_admin()
-        # from django.contrib.admin import site
-        # self.adminsite = site
+
 
     def tearDown(self):
         self.client.logout()
