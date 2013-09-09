@@ -2,7 +2,7 @@
 import inspect
 from threading import local
 
-VERSION = (0, 5, 1, 'alpha', 0)
+VERSION = (0, 5, 2, 'alpha', 0)
 
 # Dynamically calculate the version based on VERSION tuple
 if len(VERSION) > 2 and VERSION[2] is not None:
