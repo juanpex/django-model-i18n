@@ -1,7 +1,8 @@
 django-model-i18n
 =================
 
-.. image:: https://travis-ci.org/juanpex/django-model-i18n.png?branch=master   :target: https://travis-ci.org/juanpex/django-model-i18n
+.. image:: https://travis-ci.org/juanpex/django-model-i18n.png?branch=master
+    :target: https://travis-ci.org/juanpex/django-model-i18n
 
 django-model-i18n is a django application that tries to make multilingual data in models less painful.
 
