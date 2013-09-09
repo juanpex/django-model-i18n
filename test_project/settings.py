@@ -39,7 +39,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.flatpages',
     'django.contrib.admin',
-    'south',
     'app',
 )
 
@@ -48,6 +47,13 @@ try:
     INSTALLED_APPS += ('django_extensions',)
 except:
     pass
+
+try:
+    import south
+    INSTALLED_APPS += ('south',)
+except:
+    pass
+
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
