@@ -236,12 +236,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
 
 
     def get_i18n_formsets(self, request, obj=None):
-<<<<<<< HEAD
-
-        for inline in self.get_inline_instances(request):
-=======
         for inline in self.get_inline_instances(*get_inline_instances_args(self, request, obj)):
->>>>>>> master
             if not hasattr(inline.model, '_translation_model'):
                 continue
             defaults = {
@@ -269,11 +264,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
         # FIX for 1.3
         superadmin = super(TranslationModelAdmin, self)
         if hasattr(superadmin, 'get_inline_instances'):
-<<<<<<< HEAD
-            inline_instances = superadmin.get_inline_instances(request, obj)
-=======
             inline_instances = superadmin.get_inline_instances(*get_inline_instances_args(superadmin, request, obj))
->>>>>>> master
         else:
             inline_instances = self.inline_instances
         inline_i18n_models = dict([(i18n_inline.model, i18n_inline) for i18n_inline in self.i18n_inlines])
@@ -459,13 +450,9 @@ class TranslationModelAdmin(admin.ModelAdmin):
             return prepopulated_fields
 
         inline_admin_formsets = []
-<<<<<<< HEAD
-        for inline, formset in zip(self.get_inline_instances(request), formsets):
-=======
         for inline, formset in zip(self.get_inline_instances(*get_inline_instances_args(self, request, obj)), formsets):
             if not hasattr(inline.model, '_translation_model'):
                 continue
->>>>>>> master
             fieldsets = list(inline.get_fieldsets(request))
             readonly = list(inline.get_readonly_fields(request))
             prepopulated = dict(get_prepopulated_fields_inline(inline, request))
