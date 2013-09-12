@@ -1,6 +1,8 @@
 django-model-i18n
 =================
 
+.. image:: https://travis-ci.org/juanpex/django-model-i18n.png?branch=master :target: https://travis-ci.org/juanpex/django-model-i18n
+
 django-model-i18n is a django application that tries to make multilingual data in models less painful.
 
 The main features/goals are:
@@ -74,13 +76,13 @@ Notes
 =====
 
 If you want to translate models that are in ``django.contrib.*``, *e.g.* flatpages, you can create a ``translations.py`` in your root project directory and register them like this::
-    
+
     from model_i18n import translator
     from django.contrib.flatpages.models import FlatPage
 
     class FlatPageTranslation(translator.ModelTranslation):
         fields = ('title', 'content')
-    
+
     translator.register(FlatPage, FlatPageTranslation)
 
 
