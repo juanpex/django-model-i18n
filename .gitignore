@@ -22,3 +22,4 @@ dist
 *.tmp*
 local_settings.py
 *.textile
+.venv

@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import inspect
 from django import VERSION as DJANGO_VERSION
 from django.conf import settings
-from django.conf.urls import patterns, url
+try:
+    from django.conf.urls.defaults import patterns, url
+except ImportError:
+    from django.conf.urls import patterns, url
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.admin.util import unquote
@@ -106,6 +110,12 @@ class Readonly(object):
             field.widget.original_value = display_value
 
 
+def get_inline_instances_args(cls, request, obj=None):
+    fun = getattr(cls, 'get_inline_instances')
+    if len(inspect.getargspec(fun).args) > 2:
+        return [request, obj]
+    return [request]
+
 class TranslationModelAdmin(admin.ModelAdmin):
 
     lang = None
@@ -123,10 +133,10 @@ class TranslationModelAdmin(admin.ModelAdmin):
         info = self.model._meta.app_label, self.model._translation_model._meta.module_name
         return urls[:-1] + patterns('',
             url(r'^$', self.changelist_view, name='%s_%s_changelist' % info),
-            url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2})/$',
-                self.i18n_change_view),
-            url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2}-[a-z]{2})/$',
-                self.i18n_change_view),
+            url(r'^(?P<object_id>.*)/(?P<language>[a-zA-Z]{2})/$',
+                self.i18n_change_view, name="%s_add" % info[1]),
+            # url(r'^(?P<object_id>.*)/(?P<language>[a-zA-Z]{2}-[a-zA-Z]{2})/$',
+            #     self.i18n_change_view, name="%s_%s_add2" % info),
             urls[-1])
 
     @autotranslate_view
@@ -222,9 +232,16 @@ class TranslationModelAdmin(admin.ModelAdmin):
             return [(None, {'fields': fields})]
         return super(TranslationModelAdmin, self).get_fieldsets(request, obj)
 
+
+
+
     def get_i18n_formsets(self, request, obj=None):
+<<<<<<< HEAD
 
         for inline in self.get_inline_instances(request):
+=======
+        for inline in self.get_inline_instances(*get_inline_instances_args(self, request, obj)):
+>>>>>>> master
             if not hasattr(inline.model, '_translation_model'):
                 continue
             defaults = {
@@ -252,7 +269,11 @@ class TranslationModelAdmin(admin.ModelAdmin):
         # FIX for 1.3
         superadmin = super(TranslationModelAdmin, self)
         if hasattr(superadmin, 'get_inline_instances'):
+<<<<<<< HEAD
             inline_instances = superadmin.get_inline_instances(request, obj)
+=======
+            inline_instances = superadmin.get_inline_instances(*get_inline_instances_args(superadmin, request, obj))
+>>>>>>> master
         else:
             inline_instances = self.inline_instances
         inline_i18n_models = dict([(i18n_inline.model, i18n_inline) for i18n_inline in self.i18n_inlines])
@@ -378,7 +399,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
                 new_object = Tobj
             prefixes = {}
             for FormSet, inline in zip(self.get_formsets(request, new_object),
-                                       self.get_inline_instances(request)):
+                                       self.get_inline_instances(*get_inline_instances_args(self, request, new_object))):
                 prefix = FormSet.get_default_prefix()
                 prefixes[prefix] = prefixes.get(prefix, 0) + 1
                 if prefixes[prefix] != 1:
@@ -410,7 +431,7 @@ class TranslationModelAdmin(admin.ModelAdmin):
             prefixes = {}
             for FormSet, inline in \
                 zip(self.get_formsets(request, Tobj._master), \
-                    self.get_inline_instances(request)):
+                    self.get_inline_instances(*get_inline_instances_args(self, request, Tobj))):
                 prefix = FormSet.get_default_prefix()
                 prefixes[prefix] = prefixes.get(prefix, 0) + 1
                 if prefixes[prefix] != 1:
@@ -438,7 +459,13 @@ class TranslationModelAdmin(admin.ModelAdmin):
             return prepopulated_fields
 
         inline_admin_formsets = []
+<<<<<<< HEAD
         for inline, formset in zip(self.get_inline_instances(request), formsets):
+=======
+        for inline, formset in zip(self.get_inline_instances(*get_inline_instances_args(self, request, obj)), formsets):
+            if not hasattr(inline.model, '_translation_model'):
+                continue
+>>>>>>> master
             fieldsets = list(inline.get_fieldsets(request))
             readonly = list(inline.get_readonly_fields(request))
             prepopulated = dict(get_prepopulated_fields_inline(inline, request))

@@ -9,9 +9,9 @@ sys.path.append(join(PROJECT_DIR, '..'))
 sys.path.append(join(PROJECT_DIR, 'apps'))
 
 LANGUAGES = (
-  ('en', 'English'),
-  ('es', 'Español'),
-  ('fr', 'Français'),
+  ('en', u'English'),
+  ('es', u'Español'),
+  ('fr', u'Français'),
 )
 LANGUAGE_CODE = 'en'
 
@@ -39,9 +39,21 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.flatpages',
     'django.contrib.admin',
-    'south',
     'app',
 )
+
+try:
+    import django_extensions
+    INSTALLED_APPS += ('django_extensions',)
+except:
+    pass
+
+try:
+    import south
+    INSTALLED_APPS += ('south',)
+except:
+    pass
+
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
