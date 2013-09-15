@@ -22,7 +22,7 @@ Clone the git repository::
 
 or install with pip::
 
-    pip install git+https://github.com/juanpex/django-model-i18n.git#egg=django-model-i18n
+    pip install django-model-i18n
 
 Configuration
 =============
