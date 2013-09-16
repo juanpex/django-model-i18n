@@ -116,6 +116,7 @@ def get_inline_instances_args(cls, request, obj=None):
         return [request, obj]
     return [request]
 
+
 class TranslationModelAdmin(admin.ModelAdmin):
 
     lang = None
@@ -127,17 +128,6 @@ class TranslationModelAdmin(admin.ModelAdmin):
     def __init__(self, *args, **kw):
         super(TranslationModelAdmin, self).__init__(*args, **kw)
         self.Tmodel = self.model._translation_model
-
-    def get_urls(self):
-        urls = super(TranslationModelAdmin, self).get_urls()
-        info = self.model._meta.app_label, self.model._translation_model._meta.module_name
-        return urls[:-1] + patterns('',
-            url(r'^$', self.changelist_view, name='%s_%s_changelist' % info),
-            url(r'^(?P<object_id>.*)/(?P<language>[a-zA-Z]{2})/$',
-                self.i18n_change_view, name="%s_add" % info[1]),
-            # url(r'^(?P<object_id>.*)/(?P<language>[a-zA-Z]{2}-[a-zA-Z]{2})/$',
-            #     self.i18n_change_view, name="%s_%s_add2" % info),
-            urls[-1])
 
     @autotranslate_view
     def add_view(self, *args, **kw):
@@ -231,9 +221,6 @@ class TranslationModelAdmin(admin.ModelAdmin):
             fields = form.base_fields.keys()
             return [(None, {'fields': fields})]
         return super(TranslationModelAdmin, self).get_fieldsets(request, obj)
-
-
-
 
     def get_i18n_formsets(self, request, obj=None):
         for inline in self.get_inline_instances(*get_inline_instances_args(self, request, obj)):
