@@ -109,6 +109,7 @@ def get_i18n_urls(fun):
         urls = fun(self)
         info = self.model._meta.app_label, self.model._translation_model._meta.module_name
         return urls[:-1] + patterns('',
+                url(r'^$', self.changelist_view, name='%s_%s_changelist' % info),
                 url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2})/$',
                     self.i18n_change_view, name="%s_add" % info[1]),
                     url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2}-[a-z]{2})/$',
