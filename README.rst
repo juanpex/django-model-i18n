@@ -124,3 +124,9 @@ Deleting
 ::
 
     Item.objects.set_language("fr").filter(translations__title__contains='titres à éliminer').delete()
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/juanpex/django-model-i18n/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
+
