@@ -27,7 +27,7 @@ or install with pip::
 Configuration
 =============
 
-Add ``model_i18n`` admin loaders to your root project ``urls.py``::
+Add ``model_i18n`` admin loaders to your root project ``urls.py`` after admin.autodiscover()::
 
     from model_i18n import loaders
 
