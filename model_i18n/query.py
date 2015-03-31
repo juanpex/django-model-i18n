@@ -70,7 +70,7 @@ class TransJoin(QOuterJoins):
         where = '%(m_table)s.%(m_pk)s = %(alias)s.%(t_fk)s %(and)s '\
                 "%(alias)s.%(t_lang)s = '%(lang)s'" % {
                     'm_table': QN(master_table),
-                    'm_pk':  QN(master_pk),
+                    'm_pk': QN(master_pk),
                     'and': AND,
                     'alias': QN(alias),
                     't_fk': QN(trans_fk),
@@ -98,13 +98,12 @@ class TransJoin(QOuterJoins):
                 alias = QN(alias)
                 select['id_%s' % lang] = '%s.%s' % (alias, trans_pk)
                 select.update(('%s_%s' % (name, lang),
-                               '%s.%s' % (alias, QN(name)))
-                                    for name in fields)
+                               '%s.%s' % (alias, QN(name))) for name in fields)
                 select[CURRENT_LANGUAGES] = '\'%s\'' % '_'.join(self.data.itervalues())
                 query.add_extra(select, None, None, None, None, None)
 
-        #aux = list(query.custom_joins)
-        #query.custom_joins = list(set(aux))
+        # aux = list(query.custom_joins)
+        # query.custom_joins = list(set(aux))
         super(TransJoin, self).add_to_query(query, used_aliases)
 
     def __and__(self, right):
@@ -117,6 +116,31 @@ class TransJoin(QOuterJoins):
         return super(TransJoin, self).__and__(right)
 
 
+def is_django16(query):
+    if not hasattr(query, 'add_q'):
+        return False
+    import inspect
+    if isinstance(query, (TransQuery)):
+        fun = getattr(super(query.__class__, query), 'add_q')
+    else:
+        fun = getattr(query, 'add_q')
+    return len(inspect.getargspec(fun).args) <= 2
+
+
+class TransQuery(Query):
+
+    def add_q(self, q_object, used_aliases=None, force_having=False):
+        if not is_django16(self):
+            super(TransQuery, self).add_q(q_object, used_aliases, force_having)
+        else:
+            if used_aliases is None:
+                used_aliases = self.used_aliases
+            if hasattr(q_object, 'add_to_query'):
+                # Complex custom objects are responsible for adding themselves.
+                q_object.add_to_query(self, used_aliases)
+            super(TransQuery, self).add_q(q_object)
+
+
 class TransQuerySet(QuerySet):
     """ Translation QuerySet class
     QuerySet that joins with translation table, retrieves translated
@@ -126,6 +150,10 @@ class TransQuerySet(QuerySet):
     def __init__(self, *args, **kwargs):
         self.languages = set()
         self.lang = None
+        prequery = kwargs['query']
+        if is_django16(prequery) and args:
+            kwargs['query'] = TransQuery(args[0])
+            kwargs['query'].where = prequery.where
         super(TransQuerySet, self).__init__(*args, **kwargs)
 
     def set_language(self, language):
@@ -157,11 +185,14 @@ class TransQuerySet(QuerySet):
             return update_count
         return super(TransQuerySet, self).update(*args, **kwargs)
 
+    def is_trans_query(self):
+        return self.lang and self.lang != get_master_language(self.model)
+
     def filter(self, *args, **kwargs):
-        if self.lang and self.lang != get_master_language(self.model):
+        if self.is_trans_query():
             from model_i18n.utils import get_translation_opt
             translatable_fields = \
-            get_translation_opt(self.model, 'translatable_fields')
+                get_translation_opt(self.model, 'translatable_fields')
             aps = []
             for k, v in kwargs.items():
                 if "translations" not in k and k in translatable_fields:
@@ -173,6 +204,20 @@ class TransQuerySet(QuerySet):
                     qu &= item
                 return super(TransQuerySet, self).filter(qu)
         return super(TransQuerySet, self).filter(*args, **kwargs)
+
+    def _filter_or_exclude(self, negate, *args, **kwargs):
+        if self.is_trans_query() and is_django16(self.query) and args:
+            if args or kwargs:
+                assert self.query.can_filter(), "Cannot filter a query once a slice has been taken."
+            clone = self._clone()
+            rq = args[0]
+            if negate:
+                clone.query.add_q(~rq)
+            else:
+                clone.query.add_q(rq)
+            return clone
+        else:
+            return super(TransQuerySet, self)._filter_or_exclude(negate, *args, **kwargs)
 
     def iterator(self):
         """ Invokes QuerySet iterator method and tries to change instance

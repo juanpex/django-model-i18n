@@ -15,16 +15,6 @@ else:
 
 __version__ = str_version
 
-_active = local()
-
-
-def get_do_autotrans():
-    return getattr(_active, "value", True)
-
-
-def set_do_autotrans(v):
-    _active.value = v
-
 
 def get_version():
     """ Returns application version """
@@ -61,3 +51,13 @@ try:
         ensure_models()
 except:
     pass
+
+_active = local()
+
+
+def get_do_autotrans():
+    return getattr(_active, "value", True)
+
+
+def set_do_autotrans(v):
+    _active.value = v

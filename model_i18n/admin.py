@@ -6,7 +6,6 @@ try:
 except ImportError:
     from django.conf.urls import patterns, url
 
-
 from model_i18n.conf import CHANGE_TPL
 from model_i18n.exceptions import OptionWarning
 
@@ -43,6 +42,8 @@ def setup_admin(master_model, translation_model, adminsite):
     adminsite.register(master_model, admintranslation_class)
     madmin = adminsite._registry.get(master_model)
     maclass = madmin.__class__
+
+    maclass.get_urls = get_i18n_urls(maclass.get_urls)
 
     trans_inlines = madmin.inlines
     if not trans_inlines:
@@ -102,12 +103,17 @@ def get_options_base_fields(base):
     return options
 
 
-def get_urls(instance):
-    # original urls
-    urls = instance.get_urls_orig()
-    return urls[:-1] + patterns('',
-                url(r'^(?P<obj_id>\d+)/(?P<language>[a-z]{2})/$',
-                    instance.i18n_change_view),
-                    url(r'^(?P<obj_id>\d+)/(?P<language>[a-z]{2}-[a-z]{2})/$',
-                    instance.i18n_change_view),
+def get_i18n_urls(fun):
+
+    def wrap(self):
+        urls = fun(self)
+        info = self.model._meta.app_label, self.model._translation_model._meta.module_name
+        return urls[:-1] + patterns('',
+                url(r'^$', self.changelist_view, name='%s_%s_changelist' % info),
+                url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2})/$',
+                    self.i18n_change_view, name="%s_add" % info[1]),
+                    url(r'^(?P<object_id>.*)/(?P<language>[a-z]{2}-[a-z]{2})/$',
+                    self.i18n_change_view, name="%s_add2" % info[1]),
                 urls[-1])
+    return wrap
+
