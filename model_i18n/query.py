@@ -70,7 +70,7 @@ class TransJoin(QOuterJoins):
         where = '%(m_table)s.%(m_pk)s = %(alias)s.%(t_fk)s %(and)s '\
                 "%(alias)s.%(t_lang)s = '%(lang)s'" % {
                     'm_table': QN(master_table),
-                    'm_pk':  QN(master_pk),
+                    'm_pk': QN(master_pk),
                     'and': AND,
                     'alias': QN(alias),
                     't_fk': QN(trans_fk),
@@ -98,13 +98,12 @@ class TransJoin(QOuterJoins):
                 alias = QN(alias)
                 select['id_%s' % lang] = '%s.%s' % (alias, trans_pk)
                 select.update(('%s_%s' % (name, lang),
-                               '%s.%s' % (alias, QN(name)))
-                                    for name in fields)
+                               '%s.%s' % (alias, QN(name))) for name in fields)
                 select[CURRENT_LANGUAGES] = '\'%s\'' % '_'.join(self.data.itervalues())
                 query.add_extra(select, None, None, None, None, None)
 
-        #aux = list(query.custom_joins)
-        #query.custom_joins = list(set(aux))
+        # aux = list(query.custom_joins)
+        # query.custom_joins = list(set(aux))
         super(TransJoin, self).add_to_query(query, used_aliases)
 
     def __and__(self, right):
@@ -126,6 +125,7 @@ def is_django16(query):
     else:
         fun = getattr(query, 'add_q')
     return len(inspect.getargspec(fun).args) <= 2
+
 
 class TransQuery(Query):
 
@@ -153,6 +153,7 @@ class TransQuerySet(QuerySet):
         prequery = kwargs['query']
         if is_django16(prequery) and args:
             kwargs['query'] = TransQuery(args[0])
+            kwargs['query'].where = prequery.where
         super(TransQuerySet, self).__init__(*args, **kwargs)
 
     def set_language(self, language):
@@ -191,7 +192,7 @@ class TransQuerySet(QuerySet):
         if self.is_trans_query():
             from model_i18n.utils import get_translation_opt
             translatable_fields = \
-            get_translation_opt(self.model, 'translatable_fields')
+                get_translation_opt(self.model, 'translatable_fields')
             aps = []
             for k, v in kwargs.items():
                 if "translations" not in k and k in translatable_fields:
@@ -207,8 +208,7 @@ class TransQuerySet(QuerySet):
     def _filter_or_exclude(self, negate, *args, **kwargs):
         if self.is_trans_query() and is_django16(self.query) and args:
             if args or kwargs:
-                assert self.query.can_filter(), \
-                        "Cannot filter a query once a slice has been taken."
+                assert self.query.can_filter(), "Cannot filter a query once a slice has been taken."
             clone = self._clone()
             rq = args[0]
             if negate:

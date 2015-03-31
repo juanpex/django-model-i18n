@@ -9,7 +9,6 @@ from model_i18n.query import TransQuerySet
 from model_i18n.conf import MULTIDB_SUPPORT, DEFAULT_TRANS_MANAGER
 
 
-
 def get_do_autotrans():
     from model_i18n import _active
     return getattr(_active, "value", True)
@@ -28,9 +27,9 @@ class TransManager(class_default_managers):
 
     use_for_related_fields = True
 
-    def get_query_set(self):
+    def get_queryset(self):
         """ Adds TransQuerySet support """
-        qs = super(TransManager, self).get_query_set()
+        qs = super(TransManager, self).get_queryset()
         kwargs = {'query': qs.query}
         # Pass DB attribute if multi-db support is present.
         if MULTIDB_SUPPORT:
@@ -44,4 +43,4 @@ class TransManager(class_default_managers):
 
     def set_language(self, language_code):
         """ Sets the current language """
-        return self.get_query_set().set_language(language_code.replace("-", ""))
+        return self.get_queryset().set_language(language_code.replace("-", ""))
